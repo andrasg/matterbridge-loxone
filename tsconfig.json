@@ -1,9 +1,28 @@
 {
     "compilerOptions": {
-        "outDir": "dist",
-        "rootDir": "src",
-        "pretty": true,
-        "sourceMap": true
+      "incremental": true,
+      "composite": true,
+      "target": "esnext",
+      "lib": ["ESNext"],
+      "module": "nodenext",
+      "rootDir": "./src",
+      "moduleResolution": "nodenext",
+      "resolveJsonModule": true,
+      "allowJs": true,
+      "checkJs": true,
+      "declaration": true,
+      "declarationMap": true,
+      "sourceMap": true,
+      "outDir": "./dist",
+      "preserveConstEnums": true,
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "noImplicitAny": true,
+      "alwaysStrict": true,
+      "noImplicitOverride": true,
+      "skipLibCheck": true
     },
     "include": [
       "src/**/*.ts"

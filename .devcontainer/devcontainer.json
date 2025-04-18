@@ -8,16 +8,16 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
 	"mounts": [
-		"source=node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
-		"source=global_node_modules,target=/usr/local/share/npm-global/lib/node_modules,type=volume",
+		// Mount the local directory to /workspaces in the container.
+		"source=${localWorkspaceFolder}/.matterbridge/,target=/home/node/.matterbridge/,type=bind,consistency=cached"
 	],
 
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [ 8283 ],
+
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+	"postCreateCommand": "sudo npm install matterbridge -g && npm install && npm run matterbridge:add && sudo npm link matterbridge",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
