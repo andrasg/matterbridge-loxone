@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "matterbridge",
+    "start": "tsc -p tsconfig.json && matterbridge",
     "start:bridge": "matterbridge -bridge",
     "start:childbridge": "matterbridge -childbridge",
     "matterbridge:add": "matterbridge -add .",
@@ -15,8 +15,10 @@
     "matterbridge:enable": "matterbridge -enable .",
     "matterbridge:disable": "matterbridge -disable .",
     "matterbridge:list": "matterbridge -list",
-    "dev:link": "npm link matterbridge",
-    "dev:unlink": "npm unlink matterbridge",
+    "matterbridge:cleandata": "rm -rf .matterbridge/*",
+    "dev:linkplugin": "npm link",
+    "dev:linkmatterbridge": "npm link matterbridge",
+    "dev:unlinkmattebridge": "npm unlink matterbridge",
     "install:dependencies": "npm install node-ansi-logger node-persist-manager --omit=dev",
     "install:typescript": "npm install typescript @types/node --save-dev --omit=dev"
   },
@@ -39,6 +41,7 @@
   },
   "dependencies": {
     "node-ansi-logger": "^3.0.1",
+    "node-lox-ws-api": "^0.4.5",
     "node-persist-manager": "^1.0.8"
   },
   "devDependencies": {

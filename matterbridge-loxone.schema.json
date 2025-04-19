@@ -1,0 +1,56 @@
+{
+    "title": "Matterbridge Loxone plugin",
+    "description": "matterbridge-loxone v1.0.0 by Andras gaal",
+    "type": "object",
+    "required": ["host", "port", "username", "password"],
+    "properties": {
+      "name": {
+        "description": "Plugin name",
+        "type": "string",
+        "readOnly": true
+      },
+      "type": {
+        "description": "Plugin type",
+        "type": "string",
+        "readOnly": true
+      },
+      "host": {
+        "description": "Loxone IP address",
+        "type": "string"
+      },
+      "port": {
+        "description": "Loxone port",
+        "type": "number",
+        "default": "8080"
+      },
+      "username": {
+        "description": "Loxone username",
+        "type": "string"
+      },
+      "password": {
+        "description": "Loxone password",
+        "type": "string",
+        "ui:widget": "password"
+      },
+      "uuidsandtypes": {
+        "description": "UUIDs and types of devices",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true,
+        "selectEntityFrom": "name"
+      },
+      "debug": {
+        "description": "Enable the debug for the plugin (development only)",
+        "type": "boolean",
+        "default": false
+      },
+      "unregisterOnShutdown": {
+        "description": "Unregister all devices on shutdown (development only)",
+        "type": "boolean",
+        "default": false,
+        "ui:widget": "hidden"
+      }
+    }
+  }

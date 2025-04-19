@@ -5,6 +5,10 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
 
+	"runArgs": [
+		"--network=macvlan",
+	],
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
@@ -17,7 +21,7 @@
 	"forwardPorts": [ 8283 ],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo npm install matterbridge -g && npm install && npm run matterbridge:add && sudo npm link matterbridge",
+	"postCreateCommand": "sudo npm install matterbridge -g && npm install && npm run matterbridge:add && sudo npm link matterbridge && npm link",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
