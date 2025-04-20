@@ -24,7 +24,7 @@
     "install:typescript": "npm install typescript @types/node --save-dev --omit=dev",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\""
-},
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andrasg/matterbridge-loxone.git"

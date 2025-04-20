@@ -21,7 +21,8 @@ class WindowShade extends LoxoneDevice {
       `WindowShade-${structureSection.uuidAction}`,
     );
 
-    this.currentPosition = this.latestInitialValueEvent ? this.latestInitialValueEvent.value * 10000 : 0;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.position);
+    this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
     this.Endpoint.createDefaultWindowCoveringClusterServer(this.currentPosition);
 

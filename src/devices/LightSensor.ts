@@ -16,7 +16,9 @@ class LightSensor extends LoxoneDevice {
       `${LightSensor.name}-${structureSection.uuidAction}`,
     );
 
-    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.value);
+    let initialValue = latestValueEvent ? latestValueEvent.value : 0;
+
     this.Endpoint.createDefaultIlluminanceMeasurementClusterServer(this.luxToMatter(initialValue));
   }
 

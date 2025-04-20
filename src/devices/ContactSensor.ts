@@ -16,7 +16,8 @@ class ContactSensor extends LoxoneDevice {
       `${ContactSensor.name}-${structureSection.uuidAction}`,
     );
 
-    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value === 1 : false;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.active);
+    let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
   }

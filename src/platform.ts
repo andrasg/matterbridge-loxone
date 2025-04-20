@@ -162,9 +162,19 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new LightSensor(structureSection, this);
           break;
-          default:
+        default:
           this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           continue;
+      }
+
+      // add battery level if battery UUID definition is there
+      if (uuidAndType.split(',').some(e => e.startsWith('battery'))) {
+        let batteryUUID = uuidAndType.split(',').find(e => e.startsWith('battery'))?.split('_')[1];
+        if (batteryUUID) {
+          device.WithReplacableBattery(batteryUUID);
+        }
+      } else {
+        device.WithWiredPower();
       }
 
       // add all watched status UUIDs to the statusDevices map
@@ -176,7 +186,6 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         }
       }
 
-      device.WithWiredPower();
       device.registerWithPlatform();
     }
     this.isPluginConfigured = true;

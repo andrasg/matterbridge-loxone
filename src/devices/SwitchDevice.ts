@@ -7,11 +7,19 @@ import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
 class SwitchDevice extends LoxoneDevice {
   constructor(structureSection: any, platform: LoxonePlatform) {
-    super(structureSection, platform, [onOffSwitch, bridgedNode, powerSource], [structureSection.states.active], 'switch', `${SwitchDevice.name}-${structureSection.uuidAction}`);
+    super(
+      structureSection, 
+      platform, 
+      [onOffSwitch, bridgedNode, powerSource], 
+      [structureSection.states.active], 
+      'switch', 
+      `${SwitchDevice.name}-${structureSection.uuidAction}`
+    );
 
-    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.active);
+    let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint.createDefaultOnOffClusterServer(initialValue === 1);
+    this.Endpoint.createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');

@@ -1,9 +1,10 @@
-import { AtLeastOne, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
+import { AtLeastOne, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands, PowerSource } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
 import { Utils } from '../utils/Utils.js';
+import { createHash } from 'crypto';
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
@@ -19,13 +20,11 @@ abstract class LoxoneDevice {
   public roomname: string;
   public name: string;
   public longname: string;
-  public initialEvents: LoxoneUpdateEvent[];
-  public latestInitialValueEvent: LoxoneValueUpdateEvent | undefined;
-  public latestInitialTextEvent: LoxoneTextUpdateEvent | undefined;
   public platform: LoxonePlatform;
   public typeName: string;
   public deviceTypeDefinitions: AtLeastOne<DeviceTypeDefinition>;
   public uniqueStorageKey: string;
+  private batteryUUID: string | undefined;
 
   constructor(
     structureSection: {},
@@ -47,15 +46,16 @@ abstract class LoxoneDevice {
     this.uniqueStorageKey = uniqueStorageKey;
 
     this.Endpoint = this.createDefaultEndpoint();
+  }
 
-    this.initialEvents = platform.initialUpdateEvents
+  public getInitialEvents(): LoxoneUpdateEvent[] {
+    return this.platform.initialUpdateEvents
       .filter((event) => this.StatusUUIDs.includes(event.uuid))
       .sort((a, b) => {
         return b.date.getMilliseconds() - a.date.getMilliseconds();
       });
-    this.latestInitialValueEvent = Utils.getLatestValueEvent(this.initialEvents);
-    this.latestInitialTextEvent = Utils.getLatestTextEvent(this.initialEvents);
   }
+
 
   public registerWithPlatform() {
     this.platform.setSelectDevice(this.Endpoint.serialNumber ?? '', this.Endpoint.deviceName ?? '', undefined, 'hub');
@@ -66,12 +66,16 @@ abstract class LoxoneDevice {
   }
 
   public createDefaultEndpoint(): MatterbridgeEndpoint {
+
+    let hash = createHash('sha256').update(this.uniqueStorageKey).digest('hex');
+    let serial = hash.substring(0, 16);
+
     let endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { uniqueStorageKey: this.uniqueStorageKey }, this.platform.config.debug as boolean)
       .createDefaultIdentifyClusterServer()
       .createDefaultGroupsClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
         this.name,
-        this.uniqueStorageKey,
+        serial,
         0xfff1,
         'Matterbridge',
         `Matterbridge ${this.typeName}`,
@@ -90,6 +94,26 @@ abstract class LoxoneDevice {
   public WithWiredPower(): LoxoneDevice {
     this.Endpoint.createDefaultPowerSourceWiredClusterServer();
     return this;
+  }
+
+  public WithReplacableBattery(batteryUUID: string): LoxoneDevice {
+    this.StatusUUIDs.push(batteryUUID);
+    this.batteryUUID = batteryUUID;
+    let initialValue = this.getLatestInitialValueEvent(batteryUUID);
+    let batteryRemaining = initialValue ? initialValue.value : 0;
+    this.Endpoint.createDefaultPowerSourceReplaceableBatteryClusterServer(batteryRemaining, this.calculateBatteryStatus(batteryRemaining));
+    return this;
+  }
+
+  private calculateBatteryStatus(batteryRemaining: number) {
+    return batteryRemaining > 40 ? PowerSource.BatChargeLevel.Ok : batteryRemaining > 20 ? PowerSource.BatChargeLevel.Warning : PowerSource.BatChargeLevel.Critical;
+  }
+
+  private async handleBatteryEvent(event: LoxoneUpdateEvent) {
+    if (event instanceof LoxoneValueUpdateEvent && event.uuid === this.batteryUUID) {
+      await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batPercentRemaining', Math.round(event.value * 2), this.Endpoint.log);
+      await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batChargeLevel', this.calculateBatteryStatus(event.value), this.Endpoint.log);
+    }
   }
 
   private executeLoxoneCommand = (command: string) => {
@@ -121,6 +145,8 @@ abstract class LoxoneDevice {
    * @param event The LoxoneUpdateEvent to handle.
    */
   async handleUpdateEvent(event: LoxoneUpdateEvent) {
+    await this.handleBatteryEvent(event);
+
     if (!this.StatusUUIDs.includes(event.uuid)) {
       this.Endpoint?.log.error(`Loxone event: ${event.uuid} received by ${this.StatusUUIDs.join(', ')}`);
       return;
@@ -141,7 +167,7 @@ abstract class LoxoneDevice {
    * @returns The latest initial event for this device.
    */
   getLatestInitialTextEvent(uuidFilter: string | undefined = undefined): LoxoneTextUpdateEvent | undefined {
-    return Utils.getLatestTextEvent(this.initialEvents, uuidFilter);
+    return Utils.getLatestTextEvent(this.getInitialEvents(), uuidFilter);
   }
 
   /**
@@ -150,7 +176,7 @@ abstract class LoxoneDevice {
    * @returns The latest initial event for this device.
    */
   getLatestInitialValueEvent(uuidFilter: string | undefined = undefined): LoxoneValueUpdateEvent | undefined {
-    return Utils.getLatestValueEvent(this.initialEvents, uuidFilter);
+    return Utils.getLatestValueEvent(this.getInitialEvents(), uuidFilter);
   }
 }
 

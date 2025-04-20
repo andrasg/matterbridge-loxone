@@ -16,14 +16,15 @@ class DimmerLight extends LoxoneDevice {
       `${DimmerLight.name}-${structureSection.uuidAction}`,
     );
 
-    let initialValue = this.latestInitialValueEvent ? Math.round(this.latestInitialValueEvent.value * 2.54) : 0;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.position);
+    let initialValue = latestValueEvent ? this.convertLoxoneValueToMatter(latestValueEvent.value) : 1;
 
     this.Endpoint.createDefaultOnOffClusterServer(initialValue !== 0).createDefaultLevelControlClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');
-    this.addLoxoneCommandHandler('moveToLevel', ({ request: { level } }) => Math.round(level / 2.54).toString());
-    this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => Math.round(level / 2.54).toString());
+    this.addLoxoneCommandHandler('moveToLevel', ({ request: { level } }) => this.convertMatterToLoxone(level).toString());
+    this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => this.convertMatterToLoxone(level).toString());
   }
 
   override async handleDeviceEvent(event: LoxoneUpdateEvent) {
@@ -32,11 +33,25 @@ class DimmerLight extends LoxoneDevice {
     if (event.value === 0) {
       await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', false, this.Endpoint.log);
     } else {
-      let targetLevel = Math.round(event.value * 2.54);
+      let targetLevel = this.convertLoxoneValueToMatter(event.value);
       await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', true, this.Endpoint.log);
       await this.Endpoint.setAttribute(LevelControl.Cluster.id, 'currentLevel', targetLevel, this.Endpoint.log);
     }
   }
+
+  convertLoxoneValueToMatter(value: number | undefined): number {
+    if (value === undefined) return 1;
+    let scaledValue = Math.round(value * 2.54);
+    return Math.min(Math.max(scaledValue, 1), 254);
+  }
+
+  convertMatterToLoxone(value: number | undefined): number {
+    if (value === undefined) return 0;
+    let scaledValue = Math.round(value / 2.54);
+    return Math.min(Math.max(scaledValue, 0), 100);
+  }
+
+
 }
 
 export { DimmerLight };

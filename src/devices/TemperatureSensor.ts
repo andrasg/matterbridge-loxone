@@ -16,15 +16,16 @@ class TemperatureSensor extends LoxoneDevice {
       `${TemperatureSensor.name}-${structureSection.uuidAction}`,
     );
 
-    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
+    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.value);
+    let initialValue = latestValueEvent ? latestValueEvent.value : 0;
 
-    this.Endpoint.createDefaultTemperatureMeasurementClusterServer(initialValue * 100);
+    this.Endpoint.createDefaultTemperatureMeasurementClusterServer(Math.round(initialValue * 100));
   }
 
   override async handleDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', event.value * 100, this.Endpoint.log);
+    await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', Math.round(event.value * 100), this.Endpoint.log);
   }
 }
 
