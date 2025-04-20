@@ -34,7 +34,7 @@ class LightMood extends LoxoneDevice {
     });
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneTextUpdateEvent)) return;
 
     this.Endpoint.log.info(`Text event received: ${event.text}`);

@@ -22,7 +22,7 @@ class MotionSensor extends LoxoneDevice {
     this.Endpoint.createDefaultOccupancySensingClusterServer(initialValue);
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     await this.Endpoint.setAttribute(OccupancySensing.Cluster.id, 'occupancy', { occupied: event.value === 1 }, this.Endpoint.log);

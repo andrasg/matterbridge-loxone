@@ -22,7 +22,7 @@ class LightSensor extends LoxoneDevice {
     this.Endpoint.createDefaultIlluminanceMeasurementClusterServer(this.luxToMatter(initialValue));
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     await this.Endpoint.setAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', this.luxToMatter(event.value), this.Endpoint.log);

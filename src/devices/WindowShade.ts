@@ -49,7 +49,7 @@ class WindowShade extends LoxoneDevice {
     });
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     switch (event.uuid) {

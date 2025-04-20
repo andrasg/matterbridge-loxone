@@ -12,7 +12,7 @@ import { WindowShade } from './devices/WindowShade.js';
 import { MotionSensor } from './devices/MotionSensor.js';
 import { DimmerLight } from './devices/DimmerLight.js';
 import { LightMood } from './devices/LightMood.js';
-import { SmokeAndWaterAlarm } from './devices/SmokeAndWaterAlarm.js';
+import { SmokeAlarm } from './devices/SmokeAlarm.js';
 import { LightSensor } from './devices/LightSensor.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
@@ -154,9 +154,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           device = new LightMood(structureSection, this, moodId, moodName);
           break;
         case 'smoke':
-          this.log.info(`Creating smoke and water alarm for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-          continue;
-          device = new SmokeAndWaterAlarm(structureSection, this);
+          this.log.info(`Creating smoke alarm for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          let supportsSmoke = structureSection.details.availableAlarms & 0x01;
+          if (!supportsSmoke) continue;
+          device = new SmokeAlarm(structureSection, this);
           break;
         case 'light':
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);

@@ -27,7 +27,7 @@ class DimmerLight extends LoxoneDevice {
     this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => this.convertMatterToLoxone(level).toString());
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     if (event.value === 0) {

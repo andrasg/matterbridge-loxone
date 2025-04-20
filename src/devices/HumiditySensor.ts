@@ -22,7 +22,7 @@ class HumiditySensor extends LoxoneDevice {
     this.Endpoint.createDefaultRelativeHumidityMeasurementClusterServer(Math.round(initialValue * 100));
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', Math.round(event.value * 100), this.Endpoint.log);

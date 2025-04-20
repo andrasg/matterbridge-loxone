@@ -141,7 +141,7 @@ abstract class LoxoneDevice {
   }
 
   /**
-   * Handles the Loxone update event raised by the platform. Do not use. Use {@link LoxoneDevice.handleDeviceEvent} instead.
+   * Handles the Loxone update event raised by the platform. Do not use. Use {@link handleDeviceEvent} instead.
    * @param event The LoxoneUpdateEvent to handle.
    */
   async handleUpdateEvent(event: LoxoneUpdateEvent) {
@@ -152,14 +152,14 @@ abstract class LoxoneDevice {
       return;
     }
 
-    await this.handleDeviceEvent(event);
+    await this.handleLoxoneDeviceEvent(event);
   }
 
   /**
    * Handle the device event. Method must be overridden in subclasses.
    * @param event The LoxoneUpdateEvent to handle.
    */
-  abstract handleDeviceEvent(event: LoxoneUpdateEvent): Promise<void>;
+  abstract handleLoxoneDeviceEvent(event: LoxoneUpdateEvent): Promise<void>;
 
   /**
    * Get the latest initial text event for this device.

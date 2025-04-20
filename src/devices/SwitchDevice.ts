@@ -25,7 +25,7 @@ class SwitchDevice extends LoxoneDevice {
     this.addLoxoneCommandHandler('off');
   }
 
-  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
     if (event.value === 1) {
