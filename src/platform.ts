@@ -29,6 +29,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   private loxoneUUIDsAndTypes: string[] = [];
 
   private statusDevices = new Map<string, LoxoneDevice[]>();
+  private allDevices: LoxoneDevice[] = [];
   private structureFile: any | undefined = undefined;
   private isPluginConfigured: boolean = false;
   public initialUpdateEvents: LoxoneUpdateEvent[] = [];
@@ -101,9 +102,12 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     await super.onConfigure();
     this.log.info(`Running onConfigure`);
 
-
+    for (const device of this.allDevices) {
+      device.setState();
+    }
 
     this.isPluginConfigured = true;
+    this.initialUpdateEvents = [];
   }
 
   private async createDevices() {
@@ -203,6 +207,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.statusDevices.set(statusUUID, [device]);
         }
       }
+
+      this.allDevices.push(device);
 
       await device.registerWithPlatform();
     }

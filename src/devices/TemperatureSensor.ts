@@ -36,8 +36,8 @@ class TemperatureSensor extends LoxoneDevice {
     }
     let currentValue = latestValueEvent.value;
 
-    if (await this.Endpoint.getAttribute(TemperatureMeasurement.Cluster.id, 'stateValue', this.Endpoint.log) !== currentValue) {
-      await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'stateValue', currentValue, this.Endpoint.log);
+    if (await this.Endpoint.getAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', this.Endpoint.log) !== currentValue) {
+      await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', currentValue, this.Endpoint.log);
     }
   }
 }

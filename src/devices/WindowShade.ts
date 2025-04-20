@@ -141,8 +141,8 @@ class WindowShade extends LoxoneDevice {
     }
     this.currentPosition = latestValueEvent.value * 10000;
 
-    if (await this.Endpoint.getAttribute(WindowCovering.Cluster.id, 'stateValue', this.Endpoint.log) !== this.currentPosition) {
-      await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'stateValue', this.currentPosition, this.Endpoint.log);
+    if (await this.Endpoint.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.Endpoint.log) !== this.currentPosition) {
+      await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
     }
   }
 }

@@ -36,8 +36,8 @@ class MotionSensor extends LoxoneDevice {
     }
     let currentState = latestValueEvent.value === 1;
 
-    if (await this.Endpoint.getAttribute(OccupancySensing.Cluster.id, 'stateValue', this.Endpoint.log) !== currentState) {
-      await this.Endpoint.setAttribute(OccupancySensing.Cluster.id, 'stateValue', currentState, this.Endpoint.log);
+    if (await this.Endpoint.getAttribute(OccupancySensing.Cluster.id, 'occupancy', this.Endpoint.log) !== currentState) {
+      await this.Endpoint.setAttribute(OccupancySensing.Cluster.id, 'occupancy', currentState, this.Endpoint.log);
     }
   }
 }
