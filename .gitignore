@@ -136,4 +136,4 @@ dist
 .pnp.*
 
 # Matterbridge persistence
-.matterbridge
+.matterbridge/
