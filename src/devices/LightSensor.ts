@@ -36,6 +36,19 @@ class LightSensor extends LoxoneDevice {
     return Math.round(Math.max(Math.pow(10, value / 10000), 0));
   }
 
+  override async setState() {
+    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.value);
+    if (!latestValueEvent) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+    let currentValue = this.luxToMatter(latestValueEvent.value);
+
+    if (await this.Endpoint.getAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', this.Endpoint.log) !== currentValue) {
+      await this.Endpoint.setAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', currentValue, this.Endpoint.log);
+    }
+  }
+
 }
 
 export { LightSensor };

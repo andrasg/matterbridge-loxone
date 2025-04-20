@@ -1,4 +1,4 @@
-import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
+import { Matterbridge, MatterbridgeAccessoryPlatform, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
 import { AnsiLogger } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
@@ -14,6 +14,7 @@ import { DimmerLight } from './devices/DimmerLight.js';
 import { LightMood } from './devices/LightMood.js';
 import { SmokeAlarm } from './devices/SmokeAlarm.js';
 import { LightSensor } from './devices/LightSensor.js';
+import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -90,6 +91,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
   override async onStart(reason?: string) {
     this.log.info(`Starting Loxone dynamic platform v${this.version}: ` + reason);
+    await this.createDevices();
 
     await this.ready;
     await this.clearSelect();
@@ -99,7 +101,18 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     await super.onConfigure();
     this.log.info(`Running onConfigure`);
 
-    // process switches
+
+
+    this.isPluginConfigured = true;
+  }
+
+  private async createDevices() {
+
+    while (!this.structureFile) {
+      this.log.info('Waiting for structure file to be received from Loxone...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
     for (const uuidAndType of this.loxoneUUIDsAndTypes) {
       let uuid = uuidAndType.split(',')[0];
       let type = uuidAndType.split(',')[1];
@@ -159,6 +172,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           if (!supportsSmoke) continue;
           device = new SmokeAlarm(structureSection, this);
           break;
+        case 'water':
+          this.log.info(`Creating water leak for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new WaterLeakSensor(structureSection, this);
+          break;
         case 'light':
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new LightSensor(structureSection, this);
@@ -187,9 +204,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         }
       }
 
-      device.registerWithPlatform();
+      await device.registerWithPlatform();
     }
-    this.isPluginConfigured = true;
   }
 
   override async onShutdown(reason?: string) {
@@ -200,10 +216,9 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   }
 
   async handleLoxoneEvent(event: LoxoneUpdateEvent) {
-    let devices = this.statusDevices.get(event.uuid);
-
     if (!this.isPluginConfigured) this.initialUpdateEvents.push(event);
 
+    let devices = this.statusDevices.get(event.uuid);
     if (!devices) return;
 
     for (const device of devices) {

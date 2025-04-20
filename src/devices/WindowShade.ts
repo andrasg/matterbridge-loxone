@@ -131,6 +131,20 @@ class WindowShade extends LoxoneDevice {
       that.updatePending = false;
     }, 100);
   }
+
+  override async setState() {
+    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.position);
+
+    if (!latestValueEvent) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+    this.currentPosition = latestValueEvent.value * 10000;
+
+    if (await this.Endpoint.getAttribute(WindowCovering.Cluster.id, 'stateValue', this.Endpoint.log) !== this.currentPosition) {
+      await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'stateValue', this.currentPosition, this.Endpoint.log);
+    }
+  }
 }
 
 export { WindowShade };

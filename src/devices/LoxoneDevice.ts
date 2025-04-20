@@ -57,11 +57,11 @@ abstract class LoxoneDevice {
   }
 
 
-  public registerWithPlatform() {
+  public async registerWithPlatform() {
     this.platform.setSelectDevice(this.Endpoint.serialNumber ?? '', this.Endpoint.deviceName ?? '', undefined, 'hub');
 
     if (this.platform.validateDevice(this.Endpoint.deviceName ?? '')) {
-      this.platform.registerDevice(this.Endpoint);
+      await this.platform.registerDevice(this.Endpoint);
     }
   }
 
@@ -160,6 +160,8 @@ abstract class LoxoneDevice {
    * @param event The LoxoneUpdateEvent to handle.
    */
   abstract handleLoxoneDeviceEvent(event: LoxoneUpdateEvent): Promise<void>;
+
+  abstract setState(): Promise<void>;
 
   /**
    * Get the latest initial text event for this device.

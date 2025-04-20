@@ -51,6 +51,22 @@ class DimmerLight extends LoxoneDevice {
     return Math.min(Math.max(scaledValue, 0), 100);
   }
 
+  override async setState() {
+    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.position);
+    if (!latestValueEvent) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+    let currentValue = latestValueEvent.value;
+
+    if (currentValue === 0) {
+      await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', false, this.Endpoint.log);
+    } else {
+      let targetLevel = this.convertLoxoneValueToMatter(currentValue);
+      await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', true, this.Endpoint.log);
+      await this.Endpoint.setAttribute(LevelControl.Cluster.id, 'currentLevel', targetLevel, this.Endpoint.log);
+    }
+  }
 
 }
 

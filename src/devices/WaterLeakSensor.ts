@@ -1,25 +1,27 @@
-import { bridgedNode, powerSource, contactSensor } from 'matterbridge';
+import { bridgedNode, powerSource, waterLeakDetector } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { BooleanState } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
-class ContactSensor extends LoxoneDevice {
+class WaterLeakSensor extends LoxoneDevice {
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
       platform,
-      [contactSensor, bridgedNode, powerSource],
+      [waterLeakDetector, bridgedNode, powerSource],
       [structureSection.states.active],
       'contact sensor',
-      `${ContactSensor.name}-${structureSection.uuidAction}`,
+      `${WaterLeakSensor.name}-${structureSection.uuidAction}`,
     );
 
     let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.active);
     let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
+    this.Endpoint.createDefaultBooleanStateClusterServer(initialValue)
+        .addRequiredClusterServers()
+        .addOptionalClusterServers();
   }
 
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
@@ -27,7 +29,6 @@ class ContactSensor extends LoxoneDevice {
 
     await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
   }
-
   override async setState() {
     let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.active);
     if (!latestValueEvent) {
@@ -42,4 +43,4 @@ class ContactSensor extends LoxoneDevice {
   }
 }
 
-export { ContactSensor };
+export { WaterLeakSensor };

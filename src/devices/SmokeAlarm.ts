@@ -28,7 +28,7 @@ class SmokeAlarm extends LoxoneDevice {
 
     let alarmState = this.calculateAlarmState();
 
-    this.Endpoint.createDefaultSmokeCOAlarmClusterServer(alarmState, SmokeCoAlarm.AlarmState.Normal);
+    this.Endpoint.createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
   }
 
   private calculateAlarmState(): SmokeCoAlarm.AlarmState {
@@ -50,6 +50,25 @@ class SmokeAlarm extends LoxoneDevice {
 
     this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
 
+  }
+
+  override async setState() {
+    let latestCause = this.getLatestInitialValueEvent(this.structureSection.states.level);
+    let latestLevel = this.getLatestInitialValueEvent(this.structureSection.states.alarmCause);
+
+    if (!latestCause || !latestLevel) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+
+    this.cause = latestCause.value;
+    this.level = latestLevel.value;
+
+    let alarmState = this.calculateAlarmState();
+
+    if (await this.Endpoint.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', this.Endpoint.log) !== alarmState) {
+      await this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
+    }
   }
 }
 

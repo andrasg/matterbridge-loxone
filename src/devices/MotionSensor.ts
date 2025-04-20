@@ -27,6 +27,19 @@ class MotionSensor extends LoxoneDevice {
 
     await this.Endpoint.setAttribute(OccupancySensing.Cluster.id, 'occupancy', { occupied: event.value === 1 }, this.Endpoint.log);
   }
+
+  override async setState() {
+    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.active);
+    if (!latestValueEvent) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+    let currentState = latestValueEvent.value === 1;
+
+    if (await this.Endpoint.getAttribute(OccupancySensing.Cluster.id, 'stateValue', this.Endpoint.log) !== currentState) {
+      await this.Endpoint.setAttribute(OccupancySensing.Cluster.id, 'stateValue', currentState, this.Endpoint.log);
+    }
+  }
 }
 
 export { MotionSensor };

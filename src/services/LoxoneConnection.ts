@@ -93,7 +93,7 @@ class LoxoneConnection extends EventEmitter {
 
   disconnect() {
     this.log.info('Loxone disconnecting');
-    this.loxoneAPI.close();
+    this.loxoneAPI.abort();
   }
 
   sendCommand(command: string, payload: any) {

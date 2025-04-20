@@ -34,6 +34,19 @@ class SwitchDevice extends LoxoneDevice {
       if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) === true) await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', false, this.Endpoint.log);
     }
   }
+
+  override async setState() {
+    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.active);
+    if (!latestValueEvent) {
+      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
+      return;
+    }
+    let currentState = latestValueEvent.value === 1;
+
+    if (await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff', this.Endpoint.log) !== currentState) {
+      await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
+    }
+  }
 }
 
 export { SwitchDevice };

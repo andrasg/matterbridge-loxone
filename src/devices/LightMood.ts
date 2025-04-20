@@ -42,7 +42,9 @@ class LightMood extends LoxoneDevice {
     if (event.uuid === this.structureSection.states.activeMoods) {
       let value = this.calculateState(event);
 
-      if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) !== value) await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', value, this.Endpoint.log);
+      if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) !== value) {
+        await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', value, this.Endpoint.log);
+      }
     } else {
       this.Endpoint.log.info(`Unknown event type: ${event.type}`);
     }
@@ -69,6 +71,20 @@ class LightMood extends LoxoneDevice {
 
     let mood = LightMood.getMoodFromMoodList(moodList.text, moodId);
     return mood.name;
+  }
+
+  override async setState() {
+    let latestActiveMoodsEvent = this.getLatestInitialTextEvent(this.structureSection.states.activeMoods);
+
+    if (!latestActiveMoodsEvent) {
+      this.Endpoint.log.warn(`No initial text event found for ${this.longname}`);
+      return;
+    }
+    let currentState = this.calculateState(latestActiveMoodsEvent);
+
+    if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) !== currentState) {
+      await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
+    }
   }
 }
 
