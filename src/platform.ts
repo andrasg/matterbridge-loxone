@@ -2,7 +2,7 @@ import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matte
 import { AnsiLogger } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
-import { LoxoneUpdateEvent } from './models/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
 import { SwitchDevice } from './devices/SwitchDevice.js';
 import { TemperatureSensor } from './devices/TemperatureSensor.js';
 import { LoxoneDevice } from './devices/LoxoneDevice.js';
@@ -12,6 +12,8 @@ import { WindowShade } from './devices/WindowShade.js';
 import { MotionSensor } from './devices/MotionSensor.js';
 import { DimmerLight } from './devices/DimmerLight.js';
 import { LightMood } from './devices/LightMood.js';
+import { SmokeAndWaterAlarm } from './devices/SmokeAndWaterAlarm.js';
+import { LightSensor } from './devices/LightSensor.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -151,7 +153,16 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.log.info(`Creating mood for Loxone control with UUID ${uuid}: ${moodName}`);
           device = new LightMood(structureSection, this, moodId, moodName);
           break;
-        default:
+        case 'smoke':
+          this.log.info(`Creating smoke and water alarm for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          continue;
+          device = new SmokeAndWaterAlarm(structureSection, this);
+          break;
+        case 'light':
+          this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new LightSensor(structureSection, this);
+          break;
+          default:
           this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           continue;
       }

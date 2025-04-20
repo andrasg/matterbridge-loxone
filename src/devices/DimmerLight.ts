@@ -1,9 +1,9 @@
 import { bridgedNode, powerSource, dimmableLight } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
 class DimmerLight extends LoxoneDevice {
   constructor(structureSection: any, platform: LoxonePlatform) {

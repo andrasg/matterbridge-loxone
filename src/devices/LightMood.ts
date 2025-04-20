@@ -1,9 +1,9 @@
 import { bridgedNode, powerSource, onOffLight } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneTextUpdateEvent } from '../models/LoxoneTextUpdateEvent.js';
+import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
 import { Utils } from '../utils/Utils.js';
 
 class LightMood extends LoxoneDevice {
@@ -17,7 +17,7 @@ class LightMood extends LoxoneDevice {
       [structureSection.states.activeMoods, structureSection.states.moodList],
       'light mood',
       `${LightMood.name}-${structureSection.uuidAction}-${moodId}`,
-      moodName,
+      moodName
     );
 
     this.moodId = moodId;

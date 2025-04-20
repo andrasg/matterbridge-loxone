@@ -1,9 +1,9 @@
 import { bridgedNode, powerSource, onOffSwitch } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
 class SwitchDevice extends LoxoneDevice {
   constructor(structureSection: any, platform: LoxonePlatform) {

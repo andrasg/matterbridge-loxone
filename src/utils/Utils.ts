@@ -1,6 +1,6 @@
-import { LoxoneTextUpdateEvent } from '../models/LoxoneTextUpdateEvent.js';
-import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
-import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
+import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
 class Utils {
   public static getEvents<T extends LoxoneUpdateEvent>(events: LoxoneUpdateEvent[], uuidFilter: string | undefined = undefined): T[] {

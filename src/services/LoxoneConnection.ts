@@ -1,8 +1,8 @@
 import LoxoneAPI = require('node-lox-ws-api');
 import { EventEmitter } from 'events';
 import { AnsiLogger } from 'matterbridge/logger';
-import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
-import { LoxoneTextUpdateEvent } from '../models/LoxoneTextUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
 
 class LoxoneConnection extends EventEmitter {
   private loxoneAPI: any;
