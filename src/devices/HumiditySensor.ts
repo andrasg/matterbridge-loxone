@@ -1,30 +1,26 @@
-import { 
-    bridgedNode, 
-    powerSource,
-    humiditySensor
-} from 'matterbridge';
+import { bridgedNode, powerSource, humiditySensor } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
 import { RelativeHumidityMeasurement } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
 
 class HumiditySensor extends LoxoneDevice {
 
-    constructor(structureSection: any, platform: LoxonePlatform, initialUpdateEvents: LoxoneUpdateEvent[]) {
-        super(structureSection, platform, [humiditySensor, bridgedNode, powerSource], 
+    constructor(structureSection: any, platform: LoxonePlatform) {
+        super(structureSection, platform, [humiditySensor, bridgedNode, powerSource],
             [
-                structureSection.states.active
+                structureSection.states.value
             ], "humidity sensor", `${HumiditySensor.name}-${structureSection.uuidAction}`);
 
-        let initialEvent = initialUpdateEvents.find((event) => event.uuid === this.StatusUUIDs[0]);
-        let initialValue = initialEvent ? initialEvent.value : 0;
+        let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
 
         this.Endpoint
-            .createDefaultRelativeHumidityMeasurementClusterServer(initialValue * 100)
-            .createDefaultPowerSourceWiredClusterServer();
+            .createDefaultRelativeHumidityMeasurementClusterServer(initialValue * 100);
     }
 
     override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+        if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
         await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', event.value * 100, this.Endpoint.log);
     }

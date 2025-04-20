@@ -1,13 +1,12 @@
 import {
     Matterbridge,
     MatterbridgeDynamicPlatform,
-    MatterbridgeEndpoint,
     PlatformConfig,
 } from 'matterbridge';
 import { AnsiLogger } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
-import { LoxoneConnection } from './LoxoneConnection.js';
-import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
+import { LoxoneConnection } from './services/LoxoneConnection.js';
+import { LoxoneUpdateEvent } from './models/LoxoneUpdateEvent.js';
 import { SwitchDevice } from './devices/SwitchDevice.js';
 import { TemperatureSensor } from './devices/TemperatureSensor.js';
 import { LoxoneDevice } from './devices/LoxoneDevice.js';
@@ -15,6 +14,8 @@ import { HumiditySensor } from './devices/HumiditySensor.js';
 import { ContactSensor } from './devices/ContactSensor.js';
 import { WindowShade } from './devices/WindowShade.js';
 import { MotionSensor } from './devices/MotionSensor.js';
+import { DimmerLight } from './devices/DimmerLight.js';
+import { LightMood } from './devices/LightMood.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
@@ -25,14 +26,14 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     public loxonePort: number | undefined = undefined;
     public loxoneUsername: string | undefined = undefined;
     public loxonePassword: string | undefined = undefined;
-    public loxoneAPI: LoxoneConnection | undefined = undefined;
+    public loxoneConnection!: LoxoneConnection;
     public roomMapping: Map<string, string> = new Map<string, string>();
     private loxoneUUIDsAndTypes: string[] = [];
 
-    private statusDevices = new Map<string, LoxoneDevice>();
+    private statusDevices = new Map<string, LoxoneDevice[]>();
     private structureFile: any | undefined = undefined;
     private isPluginConfigured: boolean = false;
-    private initialUpdateEvents: LoxoneUpdateEvent[] = [];
+    public initialUpdateEvents: LoxoneUpdateEvent[] = [];
 
     constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
         super(matterbridge, log, config);
@@ -69,14 +70,14 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
             return;
         }
 
-        this.loxoneAPI = new LoxoneConnection(this.loxoneIP!, this.loxonePort!, this.loxoneUsername!, this.loxonePassword!, this.log);
+        this.loxoneConnection = new LoxoneConnection(this.loxoneIP!, this.loxonePort!, this.loxoneUsername!, this.loxonePassword!, this.log);
 
-        this.loxoneAPI.on('get_structure_file', this.onGetStructureFile.bind(this));
+        this.loxoneConnection.on('get_structure_file', this.onGetStructureFile.bind(this));
 
-        this.loxoneAPI.on('update', this.handleLoxoneEvent.bind(this));
+        this.loxoneConnection.on('update_value', this.handleLoxoneEvent.bind(this));
+        this.loxoneConnection.on('update_text', this.handleLoxoneEvent.bind(this));
 
-        this.loxoneAPI.connect();
-
+        this.loxoneConnection.connect();
     }
 
     onGetStructureFile(filedata: any) {
@@ -119,29 +120,41 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
             switch (type.toLowerCase()) {
                 case 'switch':
                     this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new SwitchDevice(structureSection, this, this.initialUpdateEvents);
+                    device = new SwitchDevice(structureSection, this);
                     break;
                 case 'temperature':
                     this.log.info(`Creating temperature sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new TemperatureSensor(structureSection, this, this.initialUpdateEvents);
+                    device = new TemperatureSensor(structureSection, this);
                     break;
                 case 'humidity':
                     this.log.info(`Creating humidity sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new HumiditySensor(structureSection, this, this.initialUpdateEvents);
+                    device = new HumiditySensor(structureSection, this);
                     break;
                 case 'contact':
                     this.log.info(`Creating contact sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new ContactSensor(structureSection, this, this.initialUpdateEvents);
+                    device = new ContactSensor(structureSection, this);
                     break;
                 case 'occupancy':
                 case 'presence':
                 case 'motion':
                     this.log.info(`Creating motion sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new MotionSensor(structureSection, this, this.initialUpdateEvents);
+                    device = new MotionSensor(structureSection, this);
                     break;
                 case 'shading':
                     this.log.info(`Creating window covering for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-                    device = new WindowShade(structureSection, this, this.initialUpdateEvents);
+                    device = new WindowShade(structureSection, this);
+                    break;
+                case 'dimmer':
+                    let subcontrolUUID = uuidAndType.split(',')[2];
+                    let subSection = structureSection.subControls[subcontrolUUID];
+                    this.log.info(`Creating dimmer light for Loxone control with UUID ${uuid}: ${subSection.name}`);
+                    device = new DimmerLight(subSection, this);
+                    break;
+                case 'mood':
+                    let moodId = parseInt(uuidAndType.split(',')[2]);
+                    let moodName = LightMood.getMoodName(moodId, this.initialUpdateEvents, structureSection.states.moodList);
+                    this.log.info(`Creating mood for Loxone control with UUID ${uuid}: ${moodName}`);
+                    device = new LightMood(structureSection, this, moodId, moodName);
                     break;
                 default:
                     this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${structureSection.name}`);
@@ -150,8 +163,15 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
             // add all watched status UUIDs to the statusDevices map
             for (const statusUUID of device.StatusUUIDs) {
-                this.statusDevices.set(statusUUID, device);
+                if (this.statusDevices.has(statusUUID)) {
+                    this.statusDevices.get(statusUUID)!.push(device);
+                } else {
+                    this.statusDevices.set(statusUUID, [device]);
+                }
             }
+
+            device.WithWiredPower();
+            device.registerWithPlatform();
         }
         this.isPluginConfigured = true;
     }
@@ -160,20 +180,22 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         await super.onShutdown(reason);
         this.log.info('Shutting down Loxone platform: ' + reason);
 
-        if (this.loxoneAPI && this.loxoneAPI!.isConnected())
-            this.loxoneAPI!.disconnect();
+        if (this.loxoneConnection && this.loxoneConnection!.isConnected())
+            this.loxoneConnection!.disconnect();
     }
 
     async handleLoxoneEvent(event: LoxoneUpdateEvent) {
-        let device = this.statusDevices.get(event.uuid);
+        let devices = this.statusDevices.get(event.uuid);
 
         if (!this.isPluginConfigured)
             this.initialUpdateEvents.push(event);
 
-        if (!device)
+        if (!devices)
             return;
 
-        this.log.info(`Loxone event received: ${event.uuid}: ${event.value}, handing it off to device ${device.longname}`);
-        device.handleUpdateEvent(event);
+        for (const device of devices) {
+            this.log.info(`Loxone event received: ${event.toText()}, handing it off to device ${device.longname}`);
+            device.handleUpdateEvent(event);
+        }
     }
 }

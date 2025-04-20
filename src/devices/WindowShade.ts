@@ -1,12 +1,9 @@
-import {
-    bridgedNode,
-    powerSource,
-    coverDevice
-} from 'matterbridge';
+import { bridgedNode, powerSource, coverDevice } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
 
 class WindowShade extends LoxoneDevice {
 
@@ -15,7 +12,7 @@ class WindowShade extends LoxoneDevice {
     private targetPosition: number = 0;
     private updatePending = false;
 
-    constructor(structureSection: any, platform: LoxonePlatform, initialUpdateEvents: LoxoneUpdateEvent[]) {
+    constructor(structureSection: any, platform: LoxonePlatform) {
         super(
             structureSection, platform, [coverDevice, bridgedNode, powerSource],
             [
@@ -26,79 +23,87 @@ class WindowShade extends LoxoneDevice {
             ], "window covering", `WindowShade-${structureSection.uuidAction}`
         );
 
-        let initialEvent = initialUpdateEvents.find((event) => event.uuid === this.structureSection.states.position);
-        this.currentPosition = initialEvent ? initialEvent.value * 10000 : 0;
+        this.currentPosition = this.latestInitialValueEvent ? this.latestInitialValueEvent.value * 10000 : 0;
 
         this.Endpoint
-            .createDefaultWindowCoveringClusterServer(this.currentPosition) 
-            .createDefaultPowerSourceWiredClusterServer();
+            .createDefaultWindowCoveringClusterServer(this.currentPosition);
 
-        this.Endpoint.addCommandHandler('stopMotion', async () => {
-            this.Endpoint.log.info("Loxone API command 'stop' called");
-            platform.loxoneAPI!.sendCommand(this.structureSection.uuidAction, "stop");
-        });
-
-        this.Endpoint.addCommandHandler('downOrClose', async () => {
-            this.Endpoint.log.info("Loxone API command 'FullDown' called");
-            platform.loxoneAPI!.sendCommand(this.structureSection.uuidAction, "FullDown");
-        });
-
-        this.Endpoint.addCommandHandler('upOrOpen', async () => {
-            this.Endpoint.log.info("Loxone API command 'FullUp' called");
-            platform.loxoneAPI!.sendCommand(this.structureSection.uuidAction, "FullUp");
-        });
-
-        this.Endpoint.addCommandHandler('goToLiftPercentage', async ({ request: { liftPercent100thsValue } }) => {
+        this.addLoxoneCommandHandler('stopMotion', () => { return "stop"; });
+        this.addLoxoneCommandHandler('downOrClose', () => { return "FullDown"; });
+        this.addLoxoneCommandHandler('upOrOpen', () => { return "FullUp"; });
+        this.addLoxoneCommandHandler('goToLiftPercentage', ({ request: { liftPercent100thsValue } }) => {
             let targetNumber = Math.round(liftPercent100thsValue / 100);
-            let targetString;
+            let loxoneCommand;
             if (targetNumber < 1) {
-                targetString = "FullUp";
+                loxoneCommand = "FullUp";
             } else if (targetNumber > 99) {
-                targetString = "FullDown";
+                loxoneCommand = "FullDown";
             } else {
-                targetString = `manualPosition/${targetNumber}`;
+                loxoneCommand = `manualPosition/${targetNumber}`;
             }
-            this.Endpoint.log.info(`Loxone API command '${targetString}' called`);            
-            platform.loxoneAPI!.sendCommand(this.structureSection.uuidAction, targetString);
+            return loxoneCommand;
         });
     }
 
     override async handleDeviceEvent(event: LoxoneUpdateEvent) {
-        if (event.uuid === this.structureSection.states.targetPosition) {
-            this.targetPosition = event.value * 10000;
-            this.Endpoint.log.info(`Target position: ${this.targetPosition}`);
-        } else if (event.uuid === this.structureSection.states.position) {
-            this.currentPosition = event.value * 10000;
-            this.Endpoint.log.info(`Current position: ${this.currentPosition}`);
-            let oldCurrent = await this.Endpoint.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths');
-            if (oldCurrent !== this.currentPosition)
-                await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
-            }
+        if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-        if (event.uuid === this.structureSection.states.up) {
-            if (event.value === 1) {
-                this.Endpoint.log.info(`Moving up`);
-                this.operationalStatus = WindowCovering.MovementStatus.Opening;
-                await this.handleMovementActionWithDelay();
-            } else {
-                this.Endpoint.log.info(`Stopping`);
-                this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-                await this.handleMovementActionWithDelay();
-            }
-        } else if (event.uuid === this.structureSection.states.down) {
-            if (event.value === 1) {
-                this.Endpoint.log.info(`Moving up`);
-                this.operationalStatus = WindowCovering.MovementStatus.Closing;
-                await this.handleMovementActionWithDelay();
-            } else {
-                this.Endpoint.log.info(`Stopping`);
-                this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-                await this.handleMovementActionWithDelay();
-            }
+        switch (event.uuid) {
+            case this.structureSection.states.up:
+                this.handleUpwardMovement(event);
+                break;
+            case this.structureSection.states.down:
+                this.handleDownwardMovement(event);
+                break;
+            case this.structureSection.states.position:
+                await this.handlePositionUpdate(event);
+                break;
+            case this.structureSection.states.targetPosition:
+                this.handleTargetPositionUpdate(event);
+                break;
+            default:
+                this.Endpoint.log.warn(`Unhandled event: ${event.uuid}`);
         }
     }
 
-    async handleMovementActionWithDelay() {
+    private handleTargetPositionUpdate(event: LoxoneValueUpdateEvent) {
+        this.targetPosition = event.value * 10000;
+        this.Endpoint.log.info(`Target position: ${this.targetPosition}`);
+    }
+
+    private async handlePositionUpdate(event: LoxoneValueUpdateEvent) {
+        this.currentPosition = event.value * 10000;
+        this.Endpoint.log.info(`Current position: ${this.currentPosition}`);
+        let oldCurrent = await this.Endpoint.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths');
+        if (oldCurrent !== this.currentPosition)
+            await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
+    }
+
+    private handleDownwardMovement(event: LoxoneValueUpdateEvent) {
+        if (event.value === 1) {
+            this.Endpoint.log.info(`Moving up`);
+            this.operationalStatus = WindowCovering.MovementStatus.Closing;
+            this.handleMovementActionWithDelay();
+        } else {
+            this.Endpoint.log.info(`Stopping`);
+            this.operationalStatus = WindowCovering.MovementStatus.Stopped;
+            this.handleMovementActionWithDelay();
+        }
+    }
+
+    private async handleUpwardMovement(event: LoxoneValueUpdateEvent) {
+        if (event.value === 1) {
+            this.Endpoint.log.info(`Moving up`);
+            this.operationalStatus = WindowCovering.MovementStatus.Opening;
+            this.handleMovementActionWithDelay();
+        } else {
+            this.Endpoint.log.info(`Stopping`);
+            this.operationalStatus = WindowCovering.MovementStatus.Stopped;
+            this.handleMovementActionWithDelay();
+        }
+    }
+
+    handleMovementActionWithDelay() {
         if (this.updatePending)
             return;
 

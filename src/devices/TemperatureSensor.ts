@@ -1,31 +1,27 @@
-import { 
-    bridgedNode, 
-    powerSource,
-    temperatureSensor,
-} from 'matterbridge';
+import { bridgedNode, powerSource, temperatureSensor } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
 import { TemperatureMeasurement } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneUpdateEvent } from '../models/LoxoneUpdateEvent.js';
 
 class TemperatureSensor extends LoxoneDevice {
 
-    constructor(structureSection: any, platform: LoxonePlatform, initialUpdateEvents: LoxoneUpdateEvent[]) {
-        super(structureSection, platform, [temperatureSensor, bridgedNode, powerSource], 
+    constructor(structureSection: any, platform: LoxonePlatform) {
+        super(structureSection, platform, [temperatureSensor, bridgedNode, powerSource],
             [
-                structureSection.states.active
+                structureSection.states.value
             ], "temperature sensor", `${TemperatureSensor.name}-${structureSection.uuidAction}`);
 
-        let initialEvent = initialUpdateEvents.find((event) => event.uuid === this.StatusUUIDs[0]);
-        let initialValue = initialEvent ? initialEvent.value : 0;
+        let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
 
         this.Endpoint
-            .createDefaultTemperatureMeasurementClusterServer(initialValue * 100)
-            .createDefaultPowerSourceWiredClusterServer();
+            .createDefaultTemperatureMeasurementClusterServer(initialValue * 100);
 
     }
 
     override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+        if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
         await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', event.value * 100, this.Endpoint.log);
     }

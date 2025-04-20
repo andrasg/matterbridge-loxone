@@ -1,7 +1,8 @@
 import LoxoneAPI = require('node-lox-ws-api');
 import { EventEmitter } from "events";
-import { LoxoneUpdateEvent } from "./data/LoxoneUpdateEvent.js";
-import { AnsiLogger, dn, gn, db, wr, zb, payloadStringify, rs, debugStringify, CYAN, er, nf } from 'matterbridge/logger';
+import { AnsiLogger } from 'matterbridge/logger';
+import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
+import { LoxoneTextUpdateEvent } from '../models/LoxoneTextUpdateEvent.js';
 
 class LoxoneConnection extends EventEmitter {
 
@@ -79,8 +80,13 @@ class LoxoneConnection extends EventEmitter {
         });
         
         this.loxoneAPI.on('update_event_value', function(uuid: any, evt: any) {
-            that.emit("update", new LoxoneUpdateEvent(uuid, evt));
+            that.emit("update_value", new LoxoneValueUpdateEvent(uuid, evt));
         });
+
+        this.loxoneAPI.on('update_event_text', function(uuid: any, evt: any) {
+            that.emit("update_text", new LoxoneTextUpdateEvent(uuid, evt));
+        });
+
     }
 
     connect() {

@@ -1,14 +1,15 @@
-class LoxoneUpdateEvent {
+abstract class LoxoneUpdateEvent {
 
     uuid: string;
-    value: number;
     date: Date;
+    abstract type: string;
     
-    constructor(uuid:string, evt: number) {
+    constructor(uuid:string) {
         this.uuid = uuid;
-        this.value = evt;
         this.date = new Date();
     }
+
+    abstract toText(): string;
 }
 
 export { LoxoneUpdateEvent }

@@ -6,7 +6,7 @@
     "configurations": [
 
         {
-            "name": "Launch via NPM",
+            "name": "Debug",
             "request": "launch",
             "runtimeArgs": [
                 "run",
