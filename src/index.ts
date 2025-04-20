@@ -15,5 +15,5 @@ import { LoxonePlatform } from './platform.js';
  * @returns {LoxonePlatform} The initialized Loxone platform.
  */
 export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig): LoxonePlatform {
-    return new LoxonePlatform(matterbridge, log, config);
-  }
+  return new LoxonePlatform(matterbridge, log, config);
+}

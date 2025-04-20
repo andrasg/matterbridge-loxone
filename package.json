@@ -20,8 +20,10 @@
     "dev:linkmatterbridge": "npm link matterbridge",
     "dev:unlinkmattebridge": "npm unlink matterbridge",
     "install:dependencies": "npm install node-ansi-logger node-persist-manager --omit=dev",
-    "install:typescript": "npm install typescript @types/node --save-dev --omit=dev"
-  },
+    "install:typescript": "npm install typescript @types/node --save-dev --omit=dev",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\""
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andrasg/matterbridge-loxone.git"
@@ -47,6 +49,9 @@
   "devDependencies": {
     "@eslint/js": "9.22.0",
     "@types/node": "^22.14.1",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "8.26.1"
   }

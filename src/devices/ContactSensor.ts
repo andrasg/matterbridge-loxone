@@ -6,23 +6,26 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
 
 class ContactSensor extends LoxoneDevice {
+  constructor(structureSection: any, platform: LoxonePlatform) {
+    super(
+      structureSection,
+      platform,
+      [contactSensor, bridgedNode, powerSource],
+      [structureSection.states.active],
+      'contact sensor',
+      `${ContactSensor.name}-${structureSection.uuidAction}`,
+    );
 
-    constructor(structureSection: any, platform: LoxonePlatform) {
-        super(structureSection, platform, [contactSensor, bridgedNode, powerSource], 
-            [
-                structureSection.states.active
-            ], "contact sensor", `${ContactSensor.name}-${structureSection.uuidAction}`);
+    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value === 1 : false;
 
-        let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value === 1 : false;
+    this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
+  }
 
-        this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
-    }
+  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+    if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    override async handleDeviceEvent(event: LoxoneUpdateEvent) {
-        if (!(event instanceof LoxoneValueUpdateEvent)) return;
-
-        await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
-    }
+    await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
+  }
 }
 
-export { ContactSensor }
+export { ContactSensor };

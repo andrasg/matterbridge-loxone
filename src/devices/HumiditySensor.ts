@@ -6,24 +6,26 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../models/LoxoneValueUpdateEvent.js';
 
 class HumiditySensor extends LoxoneDevice {
+  constructor(structureSection: any, platform: LoxonePlatform) {
+    super(
+      structureSection,
+      platform,
+      [humiditySensor, bridgedNode, powerSource],
+      [structureSection.states.value],
+      'humidity sensor',
+      `${HumiditySensor.name}-${structureSection.uuidAction}`,
+    );
 
-    constructor(structureSection: any, platform: LoxonePlatform) {
-        super(structureSection, platform, [humiditySensor, bridgedNode, powerSource],
-            [
-                structureSection.states.value
-            ], "humidity sensor", `${HumiditySensor.name}-${structureSection.uuidAction}`);
+    let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
 
-        let initialValue = this.latestInitialValueEvent ? this.latestInitialValueEvent.value : 0;
+    this.Endpoint.createDefaultRelativeHumidityMeasurementClusterServer(initialValue * 100);
+  }
 
-        this.Endpoint
-            .createDefaultRelativeHumidityMeasurementClusterServer(initialValue * 100);
-    }
+  override async handleDeviceEvent(event: LoxoneUpdateEvent) {
+    if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    override async handleDeviceEvent(event: LoxoneUpdateEvent) {
-        if (!(event instanceof LoxoneValueUpdateEvent)) return;
-
-        await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', event.value * 100, this.Endpoint.log);
-    }
+    await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', event.value * 100, this.Endpoint.log);
+  }
 }
 
-export { HumiditySensor }
+export { HumiditySensor };
