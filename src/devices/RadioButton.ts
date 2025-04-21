@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, onOffLight } from 'matterbridge';
+import { bridgedNode, powerSource, onOffSwitch } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
@@ -14,7 +14,7 @@ class RadioButton extends LoxoneDevice {
     super(
       structureSection,
       platform,
-      [onOffLight, bridgedNode, powerSource],
+      [onOffSwitch, bridgedNode, powerSource],
       [structureSection.states.activeOutput],
       'radio button',
       `${RadioButton.name}_${structureSection.uuidAction.replace(/-/g, '_')}_${outputId}`,
