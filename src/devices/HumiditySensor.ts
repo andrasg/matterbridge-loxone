@@ -13,7 +13,7 @@ class HumiditySensor extends LoxoneDevice {
       [humiditySensor, bridgedNode, powerSource],
       [structureSection.states.value],
       'humidity sensor',
-      `${HumiditySensor.name}-${structureSection.uuidAction}`,
+      `${HumiditySensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);

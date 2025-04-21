@@ -1,25 +1,28 @@
-import { bridgedNode, powerSource, contactSensor } from 'matterbridge';
+import { bridgedNode, powerSource, onOffOutlet } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
-import { BooleanState } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import { OnOff } from 'matterbridge/matter/clusters';
+import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
-class ContactSensor extends LoxoneDevice {
+class OutletDevice extends LoxoneDevice {
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
-      structureSection,
-      platform,
-      [contactSensor, bridgedNode, powerSource],
-      [structureSection.states.active],
-      'contact sensor',
-      `${ContactSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`
+      structureSection, 
+      platform, 
+      [onOffOutlet, bridgedNode, powerSource], 
+      [structureSection.states.active], 
+      'outlet', 
+      `${OutletDevice.name}_${structureSection.uuidAction.replace(/-/g, '_')}`
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
     let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
+    this.Endpoint.createDefaultOnOffClusterServer(initialValue);
+
+    this.addLoxoneCommandHandler('on');
+    this.addLoxoneCommandHandler('off');
   }
 
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
@@ -39,8 +42,8 @@ class ContactSensor extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
+    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
   }
 }
 
-export { ContactSensor };
+export { OutletDevice };

@@ -15,6 +15,7 @@ import { LightMood } from './devices/LightMood.js';
 import { SmokeAlarm } from './devices/SmokeAlarm.js';
 import { LightSensor } from './devices/LightSensor.js';
 import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
+import { OutletDevice } from './devices/OutletDevice.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -95,7 +96,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.log.info(`Running onConfigure`);
 
     for (const device of this.allDevices) {
-      await device.setState();
+      await device.restoreState();
     }
 
     this.isPluginConfigured = true;
@@ -127,6 +128,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         case 'switch':
           this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new SwitchDevice(structureSection, this);
+          break;
+        case 'outlet':
+          this.log.info(`Creating outlet device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new OutletDevice(structureSection, this);
           break;
         case 'temperature':
           this.log.info(`Creating temperature sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);

@@ -17,7 +17,7 @@ class SmokeAlarm extends LoxoneDevice {
       [ smokeCoAlarm, bridgedNode, powerSource ],
       [ structureSection.states.alarmCause, structureSection.states.level ],
       'smoke alarm',
-      `${SmokeAlarm.name}-${structureSection.uuidAction}`,
+      `${SmokeAlarm.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestCause = this.getLatestValueEvent(structureSection.states.level);

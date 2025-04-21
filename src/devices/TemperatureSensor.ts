@@ -13,7 +13,7 @@ class TemperatureSensor extends LoxoneDevice {
       [temperatureSensor, bridgedNode, powerSource],
       [structureSection.states.value],
       'temperature sensor',
-      `${TemperatureSensor.name}-${structureSection.uuidAction}`,
+      `${TemperatureSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);

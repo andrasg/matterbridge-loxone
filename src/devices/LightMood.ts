@@ -16,7 +16,7 @@ class LightMood extends LoxoneDevice {
       [onOffLight, bridgedNode, powerSource],
       [structureSection.states.activeMoods],
       'light mood',
-      `${LightMood.name}-${structureSection.uuidAction}-${moodId}`,
+      `${LightMood.name}_${structureSection.uuidAction.replace(/-/g, '_')}_${moodId}`,
       moodName
     );
 

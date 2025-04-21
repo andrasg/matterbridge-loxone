@@ -15,7 +15,7 @@ class DimmerLight extends LoxoneDevice {
       [dimmableLight, bridgedNode, powerSource],
       [structureSection.states.position],
       'dimmable light',
-      `${DimmerLight.name}-${structureSection.uuidAction}`,
+      `${DimmerLight.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.position);

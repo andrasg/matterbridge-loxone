@@ -96,7 +96,7 @@ abstract class LoxoneDevice {
 
     endpoint.addCommandHandler('identify', async ({ request: { identifyTime } }) => {
       this.platform.log.info(`Command identify called identifyTime: ${identifyTime}`);
-    });    
+    });
 
     return endpoint;
   }
@@ -190,9 +190,20 @@ abstract class LoxoneDevice {
   abstract handleLoxoneDeviceEvent(event: LoxoneUpdateEvent): Promise<void>;
 
   /**
-   * Asks the device to set its attributes from its internal state. Used when onConfigure is called.
+   * Asks the device to set its attributes from its internal state. Used in the onConfigure event.
    */
   abstract setState(): Promise<void>;
+
+  public async restoreState() {
+    if (this.batteryUUID !== undefined) {
+      let latestValueEvent = this.getLatestValueEvent(this.batteryUUID);
+      if (latestValueEvent !== undefined) {
+        await this.handleBatteryEvent(latestValueEvent);
+      }
+    }
+
+    await this.setState();
+  }
 
   public getLatestValueEvent(uuid: string): LoxoneValueUpdateEvent | undefined {
     let latestEvent = this.latestEventMap.get(uuid);

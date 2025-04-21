@@ -13,7 +13,7 @@ class SwitchDevice extends LoxoneDevice {
       [onOffSwitch, bridgedNode, powerSource], 
       [structureSection.states.active], 
       'switch', 
-      `${SwitchDevice.name}-${structureSection.uuidAction}`
+      `${SwitchDevice.name}_${structureSection.uuidAction.replace(/-/g, '_')}`
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);

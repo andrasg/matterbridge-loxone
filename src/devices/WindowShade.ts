@@ -18,7 +18,7 @@ class WindowShade extends LoxoneDevice {
       [coverDevice, bridgedNode, powerSource],
       [structureSection.states.position, structureSection.states.targetPosition, structureSection.states.up, structureSection.states.down],
       'window covering',
-      `WindowShade-${structureSection.uuidAction}`,
+      `${WindowShade.name}${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.position);

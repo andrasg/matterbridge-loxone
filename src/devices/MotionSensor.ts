@@ -13,7 +13,7 @@ class MotionSensor extends LoxoneDevice {
       [occupancySensor, bridgedNode, powerSource],
       [structureSection.states.active],
       'motion sensor',
-      `${MotionSensor.name}-${structureSection.uuidAction}`,
+      `${MotionSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);

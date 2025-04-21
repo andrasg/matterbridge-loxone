@@ -13,7 +13,7 @@ class LightSensor extends LoxoneDevice {
       [lightSensor, bridgedNode, powerSource],
       [structureSection.states.value],
       'light sensor',
-      `${LightSensor.name}-${structureSection.uuidAction}`,
+      `${LightSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);

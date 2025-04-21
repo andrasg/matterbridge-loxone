@@ -13,7 +13,7 @@ class WaterLeakSensor extends LoxoneDevice {
       [waterLeakDetector, bridgedNode, powerSource],
       [structureSection.states.active],
       'contact sensor',
-      `${WaterLeakSensor.name}-${structureSection.uuidAction}`,
+      `${WaterLeakSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
