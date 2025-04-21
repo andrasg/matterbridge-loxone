@@ -199,10 +199,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         if (batteryUUID) {
           device.WithReplacableBattery(batteryUUID);
         }
-      } else {
-        device.WithWiredPower();
-      }
-
+      } 
+      
       // add all watched status UUIDs to the statusDevices map
       for (const statusUUID of device.StatusUUIDs) {
         if (this.statusDevices.has(statusUUID)) {

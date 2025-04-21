@@ -3,8 +3,6 @@ import { LoxonePlatform } from '../platform.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
-import { Utils } from '../utils/Utils.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
 class RadioButton extends LoxoneDevice {
