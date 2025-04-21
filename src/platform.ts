@@ -1,4 +1,4 @@
-import { Matterbridge, MatterbridgeAccessoryPlatform, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
+import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
 import { AnsiLogger } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
@@ -18,8 +18,6 @@ import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
-  public shouldStart: boolean;
-  public shouldConfigure: boolean;
   public loxoneIP: string | undefined = undefined;
   public loxonePort: number | undefined = undefined;
   public loxoneUsername: string | undefined = undefined;
@@ -40,8 +38,6 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.log.info('Initializing Loxone platform');
 
     this.debugEnabled = config.debug as boolean;
-    this.shouldStart = false;
-    this.shouldConfigure = false;
 
     if (config.host) this.loxoneIP = config.host as string;
     if (config.port) this.loxonePort = config.port as number;
@@ -49,33 +45,29 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     if (config.password) this.loxonePassword = config.password as string;
     if (config.uuidsandtypes) this.loxoneUUIDsAndTypes = config.uuidsandtypes as string[];
 
+    // validate the Loxone config
     if (!isValidString(this.loxoneIP)) {
       this.log.error('Loxone host is not set.');
       return;
     }
-
     if (!isValidNumber(this.loxonePort, 1, 65535)) {
       this.log.error('Loxone port is not set.');
       return;
     }
-
     if (!isValidString(this.loxoneUsername)) {
       this.log.error('Loxone username is not set.');
       return;
     }
-
     if (!isValidString(this.loxonePassword)) {
       this.log.error('Loxone password is not set.');
       return;
     }
 
+    // setup the connection to Loxone
     this.loxoneConnection = new LoxoneConnection(this.loxoneIP!, this.loxonePort!, this.loxoneUsername!, this.loxonePassword!, this.log);
-
     this.loxoneConnection.on('get_structure_file', this.onGetStructureFile.bind(this));
-
     this.loxoneConnection.on('update_value', this.handleLoxoneEvent.bind(this));
     this.loxoneConnection.on('update_text', this.handleLoxoneEvent.bind(this));
-
     this.loxoneConnection.connect();
   }
 
@@ -103,7 +95,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.log.info(`Running onConfigure`);
 
     for (const device of this.allDevices) {
-      device.setState();
+      await device.setState();
     }
 
     this.isPluginConfigured = true;
@@ -112,7 +104,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
   private async createDevices() {
 
-    while (!this.structureFile) {
+    while (this.structureFile === undefined) {
       this.log.info('Waiting for structure file to be received from Loxone...');
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
@@ -210,6 +202,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
       this.allDevices.push(device);
 
+      // register with Matterbridge
       await device.registerWithPlatform();
     }
   }
@@ -218,16 +211,19 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     await super.onShutdown(reason);
     this.log.info('Shutting down Loxone platform: ' + reason);
 
-    if (this.loxoneConnection && this.loxoneConnection!.isConnected()) this.loxoneConnection!.disconnect();
+    if (this.loxoneConnection && this.loxoneConnection.isConnected()) this.loxoneConnection.disconnect();
   }
 
   async handleLoxoneEvent(event: LoxoneUpdateEvent) {
+    // store event in the initial cache if the plugin is not configured yet
     if (!this.isPluginConfigured) this.initialUpdateEvents.push(event);
 
     let devices = this.statusDevices.get(event.uuid);
     if (!devices) return;
 
     for (const device of devices) {
+      if (!device.StatusUUIDs.includes(event.uuid)) continue;
+
       this.log.info(`Loxone event received: ${event.toText()}, handing it off to device ${device.longname}`);
       device.handleUpdateEvent(event);
     }

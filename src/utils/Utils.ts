@@ -14,13 +14,17 @@ class Utils {
   }
 
   public static getLatestEvent<T extends LoxoneUpdateEvent>(events: LoxoneUpdateEvent[], uuidFilter: string | undefined = undefined): T | undefined {
-    return events.find<T>((event): event is T => {
-      if (uuidFilter !== undefined) {
-        return event.uuid === uuidFilter;
-      } else {
-        return true;
-      }
-    });
+    return events
+      .sort((a, b) => {
+        return b.date.getMilliseconds() - a.date.getMilliseconds();
+      })   
+      .find<T>((event): event is T => {
+        if (uuidFilter !== undefined) {
+          return event.uuid === uuidFilter;
+        } else {
+          return true;
+        }
+      });
   }
 
   public static getLatestTextEvent(events: LoxoneUpdateEvent[], uuidFilter: string | undefined = undefined) {

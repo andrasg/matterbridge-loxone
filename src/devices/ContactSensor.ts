@@ -16,7 +16,7 @@ class ContactSensor extends LoxoneDevice {
       `${ContactSensor.name}-${structureSection.uuidAction}`,
     );
 
-    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.active);
+    let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
     let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
@@ -25,20 +25,21 @@ class ContactSensor extends LoxoneDevice {
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
+    await this.updateAttributesFromLoxoneEvent(event);
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.active);
+    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
     }
-    let currentState = latestValueEvent.value === 1;
 
-    if (await this.Endpoint.getAttribute(BooleanState.Cluster.id, 'stateValue', this.Endpoint.log) !== currentState) {
-      await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', currentState, this.Endpoint.log);
-    }
+    await this.updateAttributesFromLoxoneEvent(latestValueEvent);
+  }
+
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
+    await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
   }
 }
 

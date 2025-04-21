@@ -14,14 +14,14 @@ class LightMood extends LoxoneDevice {
       structureSection,
       platform,
       [onOffLight, bridgedNode, powerSource],
-      [structureSection.states.activeMoods, structureSection.states.moodList],
+      [structureSection.states.activeMoods],
       'light mood',
       `${LightMood.name}-${structureSection.uuidAction}-${moodId}`,
       moodName
     );
 
     this.moodId = moodId;
-    let latestActiveMoodsEvent = this.getLatestInitialTextEvent(structureSection.states.activeMoods);
+    let latestActiveMoodsEvent = this.getLatestTextEvent(structureSection.states.activeMoods);
     let initialValue = latestActiveMoodsEvent ? this.calculateState(latestActiveMoodsEvent) : false;
 
     this.Endpoint.createDefaultOnOffClusterServer(initialValue);
@@ -37,30 +37,11 @@ class LightMood extends LoxoneDevice {
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneTextUpdateEvent)) return;
 
-    this.Endpoint.log.info(`Text event received: ${event.text}`);
-
-    if (event.uuid === this.structureSection.states.activeMoods) {
-      let value = this.calculateState(event);
-
-      if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) !== value) {
-        await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', value, this.Endpoint.log);
-      }
-    } else {
-      this.Endpoint.log.info(`Unknown event type: ${event.type}`);
-    }
+    this.updateAttributesFromLoxoneEvent(event);
   }
 
   calculateState(event: LoxoneTextUpdateEvent): boolean {
     return JSON.parse(event.text).includes(this.moodId);
-  }
-
-  static getMoodFromMoodList(moodlist: string, moodId: number) {
-    let moodList: [{ 'name': string; 'id': number }] = JSON.parse(moodlist);
-    let mood = moodList.find((mood: any) => mood.id === moodId);
-    if (mood === undefined) {
-      throw new Error(`Mood with ID ${moodId} not found in mood list.`);
-    }
-    return mood;
   }
 
   public static getMoodName(moodId: number, updateEvents: LoxoneUpdateEvent[], moodListUUID: string) {
@@ -73,18 +54,29 @@ class LightMood extends LoxoneDevice {
     return mood.name;
   }
 
+  private static getMoodFromMoodList(moodlist: string, moodId: number) {
+    let moodList: [{ 'name': string; 'id': number }] = JSON.parse(moodlist);
+    let mood = moodList.find((mood: any) => mood.id === moodId);
+    if (mood === undefined) {
+      throw new Error(`Mood with ID ${moodId} not found in mood list.`);
+    }
+    return mood;
+  }
+
   override async setState() {
-    let latestActiveMoodsEvent = this.getLatestInitialTextEvent(this.structureSection.states.activeMoods);
+    let latestActiveMoodsEvent = this.getLatestTextEvent(this.structureSection.states.activeMoods);
 
     if (!latestActiveMoodsEvent) {
       this.Endpoint.log.warn(`No initial text event found for ${this.longname}`);
       return;
     }
-    let currentState = this.calculateState(latestActiveMoodsEvent);
 
-    if ((await this.Endpoint.getAttribute(OnOff.Cluster.id, 'onOff')) !== currentState) {
-      await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
-    }
+    await this.updateAttributesFromLoxoneEvent(latestActiveMoodsEvent);
+  }
+
+  private async updateAttributesFromLoxoneEvent(event: LoxoneTextUpdateEvent) {
+    let currentState = this.calculateState(event);
+    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
   }
 }
 

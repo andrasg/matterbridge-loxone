@@ -16,7 +16,7 @@ class LightSensor extends LoxoneDevice {
       `${LightSensor.name}-${structureSection.uuidAction}`,
     );
 
-    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.value);
+    let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
     let initialValue = latestValueEvent ? latestValueEvent.value : 0;
 
     this.Endpoint.createDefaultIlluminanceMeasurementClusterServer(this.luxToMatter(initialValue));
@@ -25,7 +25,7 @@ class LightSensor extends LoxoneDevice {
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    await this.Endpoint.setAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', this.luxToMatter(event.value), this.Endpoint.log);
+    await this.updateAttributesFromLoxoneEvent(event);
   }
 
   private luxToMatter(lux: number): number {
@@ -37,18 +37,19 @@ class LightSensor extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.value);
+    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.value);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
     }
-    let currentValue = this.luxToMatter(latestValueEvent.value);
 
-    if (await this.Endpoint.getAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', this.Endpoint.log) !== currentValue) {
-      await this.Endpoint.setAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', currentValue, this.Endpoint.log);
-    }
+    await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
+    let currentValue = this.luxToMatter(event.value);
+    await this.Endpoint.setAttribute(IlluminanceMeasurement.Cluster.id, 'measuredValue', currentValue, this.Endpoint.log);
+  }
 }
 
 export { LightSensor };

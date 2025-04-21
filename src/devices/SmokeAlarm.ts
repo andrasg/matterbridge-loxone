@@ -20,8 +20,8 @@ class SmokeAlarm extends LoxoneDevice {
       `${SmokeAlarm.name}-${structureSection.uuidAction}`,
     );
 
-    let latestCause = this.getLatestInitialValueEvent(structureSection.states.level);
-    let latestLevel = this.getLatestInitialValueEvent(structureSection.states.alarmCause);
+    let latestCause = this.getLatestValueEvent(structureSection.states.level);
+    let latestLevel = this.getLatestValueEvent(structureSection.states.alarmCause);
 
     this.cause = latestCause ? latestCause.value : 0;
     this.level = latestLevel ? latestLevel.value : 0;
@@ -46,15 +46,12 @@ class SmokeAlarm extends LoxoneDevice {
       this.level = event.value;
     }
 
-    let alarmState = this.calculateAlarmState();
-
-    this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
-
+    await this.updateAttributesFromInternalState();
   }
 
   override async setState() {
-    let latestCause = this.getLatestInitialValueEvent(this.structureSection.states.level);
-    let latestLevel = this.getLatestInitialValueEvent(this.structureSection.states.alarmCause);
+    let latestCause = this.getLatestValueEvent(this.structureSection.states.level);
+    let latestLevel = this.getLatestValueEvent(this.structureSection.states.alarmCause);
 
     if (!latestCause || !latestLevel) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
@@ -64,11 +61,12 @@ class SmokeAlarm extends LoxoneDevice {
     this.cause = latestCause.value;
     this.level = latestLevel.value;
 
-    let alarmState = this.calculateAlarmState();
+    await this.updateAttributesFromInternalState();
+  }
 
-    if (await this.Endpoint.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', this.Endpoint.log) !== alarmState) {
-      await this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
-    }
+  private async updateAttributesFromInternalState() {
+    let alarmState = this.calculateAlarmState();
+    await this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
   }
 }
 

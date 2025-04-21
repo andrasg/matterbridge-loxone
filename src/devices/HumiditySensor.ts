@@ -16,7 +16,7 @@ class HumiditySensor extends LoxoneDevice {
       `${HumiditySensor.name}-${structureSection.uuidAction}`,
     );
 
-    let latestValueEvent = this.getLatestInitialValueEvent(structureSection.states.value);
+    let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
     let initialValue = latestValueEvent ? latestValueEvent.value : 0;
 
     this.Endpoint.createDefaultRelativeHumidityMeasurementClusterServer(Math.round(initialValue * 100));
@@ -25,20 +25,21 @@ class HumiditySensor extends LoxoneDevice {
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
 
-    await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', Math.round(event.value * 100), this.Endpoint.log);
+    await this.updateAttributesFromLoxoneEvent(event);
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestInitialValueEvent(this.structureSection.states.value);
+    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.value);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
     }
-    let currentValue = latestValueEvent.value;
 
-    if (await this.Endpoint.getAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', this.Endpoint.log) !== currentValue) {
-      await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', currentValue, this.Endpoint.log);
-    }
+    await this.updateAttributesFromLoxoneEvent(latestValueEvent);
+  }
+
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
+    await this.Endpoint.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', Math.round(event.value * 100), this.Endpoint.log);
   }
 }
 
