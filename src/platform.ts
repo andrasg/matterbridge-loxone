@@ -16,6 +16,7 @@ import { SmokeAlarm } from './devices/SmokeAlarm.js';
 import { LightSensor } from './devices/LightSensor.js';
 import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
 import { OutletDevice } from './devices/OutletDevice.js';
+import { RadioButton } from './devices/RadioButton.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -180,6 +181,12 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         case 'light':
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new LightSensor(structureSection, this);
+          break;
+        case 'radio':
+          let outputId = parseInt(uuidAndType.split(',')[2]);
+          let outputName = structureSection.details.outputs[outputId.toString()];
+          this.log.info(`Creating radio button for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new RadioButton(structureSection, this, outputId, outputName);
           break;
         default:
           this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${structureSection.name}`);
