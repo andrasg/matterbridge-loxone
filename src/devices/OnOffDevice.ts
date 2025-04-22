@@ -31,7 +31,9 @@ abstract class OnOffDevice extends LoxoneDevice {
     let latestValueEvent = this.getLatestValueEvent(statusUUID);
     let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint.createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint
+      .createDefaultGroupsClusterServer()
+      .createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');

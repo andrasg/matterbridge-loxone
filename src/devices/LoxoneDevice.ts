@@ -81,7 +81,6 @@ abstract class LoxoneDevice {
 
     let endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { uniqueStorageKey: this.uniqueStorageKey }, this.platform.config.debug as boolean)
       .createDefaultIdentifyClusterServer()
-      .createDefaultGroupsClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
         this.longname,
         serial,

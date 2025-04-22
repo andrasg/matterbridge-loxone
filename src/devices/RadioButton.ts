@@ -23,7 +23,9 @@ class RadioButton extends LoxoneDevice {
     let latestActiveOutputEvent = this.getLatestValueEvent(structureSection.states.activeOutput);
     let initialValue = latestActiveOutputEvent ? latestActiveOutputEvent.value === this.outputId : false;
 
-    this.Endpoint.createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint
+      .createDefaultGroupsClusterServer()
+      .createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       return `${this.outputId}`;

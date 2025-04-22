@@ -22,6 +22,7 @@ class DimmerLight extends LoxoneDevice {
     let value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
 
     this.Endpoint
+      .createDefaultGroupsClusterServer()
       .createDefaultOnOffClusterServer(value.onOff)
       .createDefaultLevelControlClusterServer(value.matterLevel);
 

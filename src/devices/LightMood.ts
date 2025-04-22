@@ -24,7 +24,9 @@ class LightMood extends LoxoneDevice {
     let latestActiveMoodsEvent = this.getLatestTextEvent(structureSection.states.activeMoods);
     let initialValue = latestActiveMoodsEvent ? this.calculateState(latestActiveMoodsEvent) : false;
 
-    this.Endpoint.createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint
+      .createDefaultGroupsClusterServer()
+      .createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       return `addMood/${this.moodId}`;
