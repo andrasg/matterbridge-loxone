@@ -3,7 +3,6 @@ import { AnsiLogger } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
 import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
-import { SwitchDevice } from './devices/SwitchDevice.js';
 import { TemperatureSensor } from './devices/TemperatureSensor.js';
 import { LoxoneDevice } from './devices/LoxoneDevice.js';
 import { HumiditySensor } from './devices/HumiditySensor.js';
@@ -15,8 +14,10 @@ import { LightMood } from './devices/LightMood.js';
 import { SmokeAlarm } from './devices/SmokeAlarm.js';
 import { LightSensor } from './devices/LightSensor.js';
 import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
-import { OutletDevice } from './devices/OutletDevice.js';
+import { OnOffOutlet } from './devices/OnOffOutlet.js';
 import { RadioButton } from './devices/RadioButton.js';
+import { OnOffSwitch } from './devices/OnOffSwitch.js';
+import { OnOffLight } from './devices/OnOffLight.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -128,11 +129,15 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       switch (type.toLowerCase()) {
         case 'switch':
           this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-          device = new SwitchDevice(structureSection, this);
+          device = new OnOffSwitch(structureSection, this);
           break;
         case 'outlet':
           this.log.info(`Creating outlet device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
-          device = new OutletDevice(structureSection, this);
+          device = new OnOffOutlet(structureSection, this);
+          break;
+        case 'light':
+          this.log.info(`Creating light for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new OnOffLight(structureSection, this);
           break;
         case 'temperature':
           this.log.info(`Creating temperature sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
@@ -178,7 +183,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.log.info(`Creating water leak for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new WaterLeakSensor(structureSection, this);
           break;
-        case 'light':
+        case 'lightsensor':
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new LightSensor(structureSection, this);
           break;
@@ -199,8 +204,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         if (batteryUUID) {
           device.WithReplacableBattery(batteryUUID);
         }
-      } 
-      
+      }
+
       // add all watched status UUIDs to the statusDevices map
       for (const statusUUID of device.StatusUUIDs) {
         if (this.statusDevices.has(statusUUID)) {

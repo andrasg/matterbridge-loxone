@@ -1,44 +1,30 @@
-import { bridgedNode, powerSource, waterLeakDetector } from 'matterbridge';
+import { waterLeakDetector } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { BooleanState } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
-class WaterLeakSensor extends LoxoneDevice {
+class WaterLeakSensor extends SingleDataPointSensor {
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
       platform,
-      [waterLeakDetector, bridgedNode, powerSource],
-      [structureSection.states.active],
-      'contact sensor',
-      `${WaterLeakSensor.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
+      WaterLeakSensor.name,
+      'water leak sensor',
+      structureSection.states.active,
+      waterLeakDetector,
+      BooleanState.Cluster.id,
+      'stateValue'
     );
 
     let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
-    let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
+    let initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
-
-    await this.updateAttributesFromLoxoneEvent(event);
-  }
-  
-  override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
-    if (!latestValueEvent) {
-      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
-      return;
-    }
-
-    await this.updateAttributesFromLoxoneEvent(latestValueEvent);
-  }
-  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    await this.Endpoint.setAttribute(BooleanState.Cluster.id, 'stateValue', event.value === 1, this.Endpoint.log);
+  override valueConverter(event: LoxoneValueUpdateEvent | undefined): boolean {
+    return event ? event.value === 1 : false;
   }
 }
 

@@ -1,22 +1,34 @@
-import { bridgedNode, powerSource, onOffSwitch } from 'matterbridge';
+import { bridgedNode, powerSource, DeviceTypeDefinition } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
-class SwitchDevice extends LoxoneDevice {
-  constructor(structureSection: any, platform: LoxonePlatform) {
+abstract class OnOffDevice extends LoxoneDevice {
+  constructor(
+    structureSection: any, 
+    platform: LoxonePlatform, 
+    className: string, 
+    shortTypeName: string, 
+    statusUUID: string, 
+    onOffDeviceType: DeviceTypeDefinition
+  ) {
     super(
       structureSection, 
       platform, 
-      [onOffSwitch, bridgedNode, powerSource], 
-      [structureSection.states.active], 
-      'switch', 
-      `${SwitchDevice.name}_${structureSection.uuidAction.replace(/-/g, '_')}`
+      [onOffDeviceType, bridgedNode, powerSource], 
+      [statusUUID], 
+      shortTypeName,
+      `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
+    // at least one status UUID is required
+    if (!statusUUID) {
+      throw new Error(`No status UUID provided for ${this.longname}`);
+    }
+
+    let latestValueEvent = this.getLatestValueEvent(statusUUID);
     let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint.createDefaultOnOffClusterServer(initialValue);
@@ -32,7 +44,7 @@ class SwitchDevice extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
+    let latestValueEvent = this.getLatestValueEvent(this.StatusUUIDs[0]);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
@@ -46,4 +58,4 @@ class SwitchDevice extends LoxoneDevice {
   }
 }
 
-export { SwitchDevice };
+export { OnOffDevice };
