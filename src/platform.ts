@@ -18,6 +18,7 @@ import { OnOffOutlet } from './devices/OnOffOutlet.js';
 import { RadioButton } from './devices/RadioButton.js';
 import { OnOffSwitch } from './devices/OnOffSwitch.js';
 import { OnOffLight } from './devices/OnOffLight.js';
+import { OnOffButton } from './devices/OnOffButton.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -130,6 +131,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         case 'switch':
           this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new OnOffSwitch(structureSection, this);
+          break;
+        case 'button':
+          this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new OnOffButton(structureSection, this);
           break;
         case 'outlet':
           this.log.info(`Creating outlet device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
