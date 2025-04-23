@@ -8,6 +8,7 @@ import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';
 import { MatterLevelInfo } from '../data/MatterLevelInfo.js';
 
 class DimmerLight extends LoxoneDevice {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
@@ -18,22 +19,19 @@ class DimmerLight extends LoxoneDevice {
       `${DimmerLight.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
-    let value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
+    const value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
 
-    this.Endpoint
-      .createDefaultGroupsClusterServer()
-      .createDefaultOnOffClusterServer(value.onOff)
-      .createDefaultLevelControlClusterServer(value.matterLevel);
+    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(value.onOff).createDefaultLevelControlClusterServer(value.matterLevel);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');
     this.addLoxoneCommandHandler('moveToLevel', ({ request: { level } }) => {
-      let value = MatterLevelInfo.fromMatterNumber(level);
+      const value = MatterLevelInfo.fromMatterNumber(level);
       return value.loxoneLevel.toString();
     });
     this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => {
-      let value = MatterLevelInfo.fromMatterNumber(level);
+      const value = MatterLevelInfo.fromMatterNumber(level);
       return value.loxoneLevel.toString();
     });
   }
@@ -45,7 +43,7 @@ class DimmerLight extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
+    const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
@@ -55,7 +53,7 @@ class DimmerLight extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    let targetLevel = LoxoneLevelInfo.fromLoxoneEvent(event);
+    const targetLevel = LoxoneLevelInfo.fromLoxoneEvent(event);
     await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', targetLevel.onOff, this.Endpoint.log);
 
     if (event.value === 1) {

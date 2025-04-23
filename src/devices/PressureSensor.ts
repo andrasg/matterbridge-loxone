@@ -5,20 +5,12 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
 class PressureSensor extends SingleDataPointSensor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
-    super(
-      structureSection,
-      platform,
-      PressureSensor.name,
-      'pressure sensor',
-      structureSection.states.active,
-      pressureSensor,
-      PressureMeasurement.Cluster.id,
-      'measuredValue',
-    );
+    super(structureSection, platform, PressureSensor.name, 'pressure sensor', structureSection.states.active, pressureSensor, PressureMeasurement.Cluster.id, 'measuredValue');
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
-    let initialValue = this.valueConverter(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
+    const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultPressureMeasurementClusterServer(initialValue);
   }

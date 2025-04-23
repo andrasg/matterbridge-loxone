@@ -5,6 +5,7 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
 class HumiditySensor extends SingleDataPointSensor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
@@ -17,8 +18,8 @@ class HumiditySensor extends SingleDataPointSensor {
       'measuredValue',
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
-    let initialValue = this.valueConverter(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
+    const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultRelativeHumidityMeasurementClusterServer(initialValue);
   }

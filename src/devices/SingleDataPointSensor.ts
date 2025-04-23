@@ -7,25 +7,18 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 abstract class SingleDataPointSensor extends LoxoneDevice {
   clusterId: ClusterId;
   attributeName: string;
-  
   constructor(
-    structureSection: any, 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    structureSection: any,
     platform: LoxonePlatform,
-    className: string, 
-    shortTypeName: string, 
-    statusUUID: string, 
+    className: string,
+    shortTypeName: string,
+    statusUUID: string,
     sensorDeviceType: DeviceTypeDefinition,
     clusterId: ClusterId,
-    attributeName: string
+    attributeName: string,
   ) {
-    super(
-      structureSection,
-      platform,
-      [ sensorDeviceType, bridgedNode, powerSource],
-      [ statusUUID ],
-      shortTypeName,
-      `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`
-    );
+    super(structureSection, platform, [sensorDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`);
 
     this.clusterId = clusterId;
     this.attributeName = attributeName;
@@ -33,10 +26,11 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
     // at least one status UUID is required
     if (!statusUUID) {
       throw new Error(`No status UUID provided for ${this.longname}`);
-    }    
+    }
   }
 
-  abstract valueConverter(event: LoxoneValueUpdateEvent | undefined): any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  abstract valueConverter(event: LoxoneValueUpdateEvent | undefined): any;
 
   override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
     if (!(event instanceof LoxoneValueUpdateEvent)) return;
@@ -45,7 +39,7 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
+    const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
@@ -55,7 +49,7 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    let value = this.valueConverter(event);
+    const value = this.valueConverter(event);
     await this.Endpoint.setAttribute(this.clusterId, this.attributeName, value, this.Endpoint.log);
   }
 }

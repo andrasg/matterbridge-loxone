@@ -5,6 +5,7 @@ import { TemperatureMeasurement } from 'matterbridge/matter/clusters';
 import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
 class TemperatureSensor extends SingleDataPointSensor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
@@ -14,11 +15,11 @@ class TemperatureSensor extends SingleDataPointSensor {
       structureSection.states.value,
       temperatureSensor,
       TemperatureMeasurement.Cluster.id,
-      'measuredValue'
+      'measuredValue',
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
-    let initialValue = this.valueConverter(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
+    const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultTemperatureMeasurementClusterServer(initialValue);
   }

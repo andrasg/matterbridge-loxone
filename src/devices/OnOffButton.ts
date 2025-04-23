@@ -6,25 +6,21 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
 class OnOffButton extends LoxoneDevice {
-  constructor(
-    structureSection: any, 
-    platform: LoxonePlatform, 
-  ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(structureSection: any, platform: LoxonePlatform) {
     super(
-      structureSection, 
-      platform, 
-      [onOffSwitch, bridgedNode, powerSource], 
-      [structureSection.states.active], 
+      structureSection,
+      platform,
+      [onOffSwitch, bridgedNode, powerSource],
+      [structureSection.states.active],
       'button',
-      `${OnOffButton.name}_${structureSection.uuidAction.replace(/-/g, '_')}`
+      `${OnOffButton.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
-    let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
+    const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint
-      .createDefaultGroupsClusterServer()
-      .createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       setTimeout(() => {
@@ -42,7 +38,7 @@ class OnOffButton extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
+    const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;

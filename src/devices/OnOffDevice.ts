@@ -6,34 +6,19 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 
 abstract class OnOffDevice extends LoxoneDevice {
-  constructor(
-    structureSection: any, 
-    platform: LoxonePlatform, 
-    className: string, 
-    shortTypeName: string, 
-    statusUUID: string, 
-    onOffDeviceType: DeviceTypeDefinition
-  ) {
-    super(
-      structureSection, 
-      platform, 
-      [onOffDeviceType, bridgedNode, powerSource], 
-      [statusUUID], 
-      shortTypeName,
-      `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`
-    );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(structureSection: any, platform: LoxonePlatform, className: string, shortTypeName: string, statusUUID: string, onOffDeviceType: DeviceTypeDefinition) {
+    super(structureSection, platform, [onOffDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`);
 
     // at least one status UUID is required
     if (!statusUUID) {
       throw new Error(`No status UUID provided for ${this.longname}`);
     }
 
-    let latestValueEvent = this.getLatestValueEvent(statusUUID);
-    let initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
+    const latestValueEvent = this.getLatestValueEvent(statusUUID);
+    const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint
-      .createDefaultGroupsClusterServer()
-      .createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');
@@ -46,7 +31,7 @@ abstract class OnOffDevice extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.StatusUUIDs[0]);
+    const latestValueEvent = this.getLatestValueEvent(this.StatusUUIDs[0]);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;

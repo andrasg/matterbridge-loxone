@@ -8,6 +8,7 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 class RadioButton extends LoxoneDevice {
   outputId: number;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform, outputId: number, outputName: string) {
     super(
       structureSection,
@@ -16,16 +17,14 @@ class RadioButton extends LoxoneDevice {
       [structureSection.states.activeOutput],
       'radio button',
       `${RadioButton.name}_${structureSection.uuidAction.replace(/-/g, '_')}_${outputId}`,
-      outputName
+      outputName,
     );
 
     this.outputId = outputId;
-    let latestActiveOutputEvent = this.getLatestValueEvent(structureSection.states.activeOutput);
-    let initialValue = latestActiveOutputEvent ? latestActiveOutputEvent.value === this.outputId : false;
+    const latestActiveOutputEvent = this.getLatestValueEvent(structureSection.states.activeOutput);
+    const initialValue = latestActiveOutputEvent ? latestActiveOutputEvent.value === this.outputId : false;
 
-    this.Endpoint
-      .createDefaultGroupsClusterServer()
-      .createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       return `${this.outputId}`;
@@ -42,7 +41,7 @@ class RadioButton extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestActiveOutputEvent = this.getLatestValueEvent(this.structureSection.states.activeOutput);
+    const latestActiveOutputEvent = this.getLatestValueEvent(this.structureSection.states.activeOutput);
 
     if (!latestActiveOutputEvent) {
       this.Endpoint.log.warn(`No initial text event found for ${this.longname}`);

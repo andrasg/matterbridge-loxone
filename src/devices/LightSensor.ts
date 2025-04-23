@@ -5,20 +5,12 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
 class LightSensor extends SingleDataPointSensor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
-    super(
-      structureSection,
-      platform,
-      LightSensor.name,
-      'light sensor',
-      structureSection.states.value,
-      lightSensor,
-      IlluminanceMeasurement.Cluster.id,
-      'measuredValue',
-    );
+    super(structureSection, platform, LightSensor.name, 'light sensor', structureSection.states.value, lightSensor, IlluminanceMeasurement.Cluster.id, 'measuredValue');
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
-    let initialValue = this.valueConverter(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.value);
+    const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultIlluminanceMeasurementClusterServer(initialValue);
   }

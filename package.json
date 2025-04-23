@@ -23,7 +23,9 @@
     "install:dependencies": "npm install node-ansi-logger node-persist-manager --omit=dev",
     "install:typescript": "npm install typescript @types/node --save-dev --omit=dev",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "lint": "eslint --max-warnings=0 .",
+    "lint:fix": "eslint --fix --max-warnings=0 ."
   },
   "repository": {
     "type": "git",
@@ -48,12 +50,17 @@
     "node-persist-manager": "^1.0.8"
   },
   "devDependencies": {
-    "@eslint/js": "9.22.0",
+    "@eslint/js": "^9.22.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
     "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-n": "^17.17.0",
     "eslint-plugin-prettier": "^5.2.6",
+    "jest": "^29.7.0",
     "prettier": "^3.5.3",
+    "ts-jest": "^29.3.2",
     "typescript": "^5.8.3",
-    "typescript-eslint": "8.26.1"
+    "typescript-eslint": "^8.26.1"
   }
 }

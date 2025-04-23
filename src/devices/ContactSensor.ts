@@ -5,20 +5,11 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { SingleDataPointSensor } from './SingleDataPointSensor.js';
 
 class ContactSensor extends SingleDataPointSensor {
-  constructor(structureSection: any, platform: LoxonePlatform) {
-    super(
-      structureSection,
-      platform,
-      ContactSensor.name,
-      'contact sensor',
-      structureSection.states.active,
-      contactSensor,
-      BooleanState.Cluster.id,
-      'stateValue',
-    );
+  constructor(structureSection: { states: { active: string } }, platform: LoxonePlatform) {
+    super(structureSection, platform, ContactSensor.name, 'contact sensor', structureSection.states.active, contactSensor, BooleanState.Cluster.id, 'stateValue');
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
-    let initialValue = this.valueConverter(latestValueEvent);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.active);
+    const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint.createDefaultBooleanStateClusterServer(initialValue);
   }

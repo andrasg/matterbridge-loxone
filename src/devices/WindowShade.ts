@@ -7,10 +7,11 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
 class WindowShade extends LoxoneDevice {
   private operationalStatus: WindowCovering.MovementStatus = WindowCovering.MovementStatus.Stopped;
-  private currentPosition: number = 0;
-  private targetPosition: number = 0;
+  private currentPosition = 0;
+  private targetPosition = 0;
   private updatePending = false;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
@@ -21,7 +22,7 @@ class WindowShade extends LoxoneDevice {
       `${WindowShade.name}${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
-    let latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
+    const latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
     this.Endpoint.createDefaultWindowCoveringClusterServer(this.currentPosition);
@@ -36,7 +37,7 @@ class WindowShade extends LoxoneDevice {
       return 'FullUp';
     });
     this.addLoxoneCommandHandler('goToLiftPercentage', ({ request: { liftPercent100thsValue } }) => {
-      let targetNumber = Math.round(liftPercent100thsValue / 100);
+      const targetNumber = Math.round(liftPercent100thsValue / 100);
       let loxoneCommand;
       if (targetNumber < 1) {
         loxoneCommand = 'FullUp';
@@ -110,28 +111,26 @@ class WindowShade extends LoxoneDevice {
 
     this.updatePending = true;
 
-    let that = this;
-
     setTimeout(async () => {
-      that.Endpoint.log.info(`Updating operational status: ${that.operationalStatus}, target: ${that.targetPosition}`);
+      this.Endpoint.log.info(`Updating operational status: ${this.operationalStatus}, target: ${this.targetPosition}`);
 
-      await that.Endpoint.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', that.targetPosition, that.Endpoint.log);
-      await that.Endpoint.setAttribute(
+      await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
+      await this.Endpoint.setAttribute(
         WindowCovering.Cluster.id,
         'operationalStatus',
         {
-          global: that.operationalStatus,
-          lift: that.operationalStatus,
-          tilt: that.operationalStatus,
+          global: this.operationalStatus,
+          lift: this.operationalStatus,
+          tilt: this.operationalStatus,
         },
-        that.Endpoint.log,
+        this.Endpoint.log,
       );
-      that.updatePending = false;
+      this.updatePending = false;
     }, 100);
   }
 
   override async setState() {
-    let latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
+    const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
 
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);

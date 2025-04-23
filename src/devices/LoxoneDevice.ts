@@ -2,8 +2,8 @@ import { AtLeastOne, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEnd
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
-import { Utils } from '../utils/Utils.js';
-import { createHash } from 'crypto';
+import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
+import { createHash } from 'node:crypto';
 import { BatteryLevelInfo } from '../data/BatteryLevelInfo.js';
 import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
 
@@ -17,6 +17,7 @@ abstract class LoxoneDevice {
    */
   public StatusUUIDs: string[];
   public Endpoint: MatterbridgeEndpoint;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public structureSection: any;
   public roomname: string;
   public name: string;
@@ -29,7 +30,8 @@ abstract class LoxoneDevice {
   public latestEventMap: Map<string, LoxoneUpdateEvent | undefined> = new Map<string, LoxoneUpdateEvent | undefined>();
 
   constructor(
-    structureSection: {},
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    structureSection: any,
     platform: LoxonePlatform,
     deviceTypeDefinitions: AtLeastOne<DeviceTypeDefinition>,
     statusUUIDs: string[],
@@ -52,7 +54,7 @@ abstract class LoxoneDevice {
 
     // pre-populate with events from the initial update events list
     for (const uuid of this.StatusUUIDs) {
-      let latestEvent = Utils.getLatestEvent(this.platform.initialUpdateEvents, uuid);
+      const latestEvent = getLatestEvent(this.platform.initialUpdateEvents, uuid);
       this.latestEventMap.set(uuid, latestEvent);
     }
   }
@@ -74,12 +76,11 @@ abstract class LoxoneDevice {
    * @returns {MatterbridgeEndpoint} The created Matterbridge endpoint.
    */
   public createDefaultEndpoint(): MatterbridgeEndpoint {
-
     // generate a deterministic serial number based on the unique storage key
-    let hash = createHash('sha256').update(this.uniqueStorageKey).digest('hex');
-    let serial = hash.substring(0, 16);
+    const hash = createHash('sha256').update(this.uniqueStorageKey).digest('hex');
+    const serial = hash.substring(0, 16);
 
-    let endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { uniqueStorageKey: this.uniqueStorageKey }, this.platform.config.debug as boolean)
+    const endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { uniqueStorageKey: this.uniqueStorageKey }, this.platform.config.debug as boolean)
       .createDefaultIdentifyClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
         this.longname,
@@ -122,11 +123,11 @@ abstract class LoxoneDevice {
     this.StatusUUIDs.push(batteryUUID);
 
     // add the value event to the latestEventMap
-    let initialValue = Utils.getLatestValueEvent(this.platform.initialUpdateEvents, batteryUUID);
+    const initialValue = getLatestValueEvent(this.platform.initialUpdateEvents, batteryUUID);
     this.latestEventMap.set(batteryUUID, initialValue);
 
     // set the initial battery attribute
-    let batteryLevelInfo = BatteryLevelInfo.fromEvent(initialValue);
+    const batteryLevelInfo = BatteryLevelInfo.fromEvent(initialValue);
     this.Endpoint.createDefaultPowerSourceReplaceableBatteryClusterServer(batteryLevelInfo.batteryRemaining, batteryLevelInfo.batteryStatus);
 
     // for chaining
@@ -138,7 +139,7 @@ abstract class LoxoneDevice {
    * @param event One of {@link MatterbridgeEndpointCommands}.
    * @param loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link command} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler(event: keyof MatterbridgeEndpointCommands, loxoneCommandFormatter?: (...args: any[]) => string) {
+  public addLoxoneCommandHandler(event: keyof MatterbridgeEndpointCommands, loxoneCommandFormatter?: (...args: never[]) => string) {
     // if the formatter is not provided, use the event name as the command
     if (loxoneCommandFormatter === undefined) {
       loxoneCommandFormatter = () => {
@@ -147,8 +148,8 @@ abstract class LoxoneDevice {
     }
 
     // delegate for executing the loxone command
-    const delegate = (...args: any[]) => {
-      const commandString = loxoneCommandFormatter!(...args);
+    const delegate = (...args: never[]) => {
+      const commandString = loxoneCommandFormatter?.(...args);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
       this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
     };
@@ -176,7 +177,7 @@ abstract class LoxoneDevice {
   }
 
   private async handleBatteryEvent(event: LoxoneValueUpdateEvent) {
-    let batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
+    const batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
 
     await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batPercentRemaining', batteryLevelInfo.batteryRemaining, this.Endpoint.log);
     await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batChargeLevel', batteryLevelInfo.batteryStatus, this.Endpoint.log);
@@ -195,7 +196,7 @@ abstract class LoxoneDevice {
 
   public async restoreState() {
     if (this.batteryUUID !== undefined) {
-      let latestValueEvent = this.getLatestValueEvent(this.batteryUUID);
+      const latestValueEvent = this.getLatestValueEvent(this.batteryUUID);
       if (latestValueEvent !== undefined) {
         await this.handleBatteryEvent(latestValueEvent);
       }
@@ -205,19 +206,18 @@ abstract class LoxoneDevice {
   }
 
   public getLatestValueEvent(uuid: string): LoxoneValueUpdateEvent | undefined {
-    let latestEvent = this.latestEventMap.get(uuid);
+    const latestEvent = this.latestEventMap.get(uuid);
     if (!(latestEvent instanceof LoxoneValueUpdateEvent)) return undefined;
 
     return latestEvent;
   }
 
   public getLatestTextEvent(uuid: string): LoxoneTextUpdateEvent | undefined {
-    let latestEvent = this.latestEventMap.get(uuid);
+    const latestEvent = this.latestEventMap.get(uuid);
     if (!(latestEvent instanceof LoxoneTextUpdateEvent)) return undefined;
 
     return latestEvent;
   }
-
 }
 
 export { LoxoneDevice };

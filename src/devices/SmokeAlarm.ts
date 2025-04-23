@@ -6,34 +6,34 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 
 class SmokeAlarm extends LoxoneDevice {
+  private cause = 0;
+  private level = 0;
 
-  private cause: number = 0;
-  private level: number = 0;
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(structureSection: any, platform: LoxonePlatform) {
     super(
       structureSection,
       platform,
-      [ smokeCoAlarm, bridgedNode, powerSource ],
-      [ structureSection.states.alarmCause, structureSection.states.level ],
+      [smokeCoAlarm, bridgedNode, powerSource],
+      [structureSection.states.alarmCause, structureSection.states.level],
       'smoke alarm',
       `${SmokeAlarm.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
-    let latestCause = this.getLatestValueEvent(structureSection.states.level);
-    let latestLevel = this.getLatestValueEvent(structureSection.states.alarmCause);
+    const latestCause = this.getLatestValueEvent(structureSection.states.level);
+    const latestLevel = this.getLatestValueEvent(structureSection.states.alarmCause);
 
     this.cause = latestCause ? latestCause.value : 0;
     this.level = latestLevel ? latestLevel.value : 0;
 
-    let alarmState = this.calculateAlarmState();
+    const alarmState = this.calculateAlarmState();
 
     this.Endpoint.createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
   }
 
   private calculateAlarmState(): SmokeCoAlarm.AlarmState {
-    let isAlarm = ((this.cause & 0x01) === 1) && this.level === 1;
-    let alarmState = isAlarm ? SmokeCoAlarm.AlarmState.Critical : SmokeCoAlarm.AlarmState.Normal;
+    const isAlarm = (this.cause & 0x01) === 1 && this.level === 1;
+    const alarmState = isAlarm ? SmokeCoAlarm.AlarmState.Critical : SmokeCoAlarm.AlarmState.Normal;
     return alarmState;
   }
 
@@ -42,7 +42,7 @@ class SmokeAlarm extends LoxoneDevice {
 
     if (event.uuid === this.structureSection.states.alarmCause) {
       this.cause = event.value;
-    } else if (event.uuid === this.structureSection.states.alarmCause) {
+    } else if (event.uuid === this.structureSection.states.level) {
       this.level = event.value;
     }
 
@@ -50,8 +50,8 @@ class SmokeAlarm extends LoxoneDevice {
   }
 
   override async setState() {
-    let latestCause = this.getLatestValueEvent(this.structureSection.states.level);
-    let latestLevel = this.getLatestValueEvent(this.structureSection.states.alarmCause);
+    const latestCause = this.getLatestValueEvent(this.structureSection.states.level);
+    const latestLevel = this.getLatestValueEvent(this.structureSection.states.alarmCause);
 
     if (!latestCause || !latestLevel) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
@@ -65,7 +65,7 @@ class SmokeAlarm extends LoxoneDevice {
   }
 
   private async updateAttributesFromInternalState() {
-    let alarmState = this.calculateAlarmState();
+    const alarmState = this.calculateAlarmState();
     await this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
   }
 }
