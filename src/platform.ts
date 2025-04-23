@@ -19,6 +19,7 @@ import { RadioButton } from './devices/RadioButton.js';
 import { OnOffSwitch } from './devices/OnOffSwitch.js';
 import { OnOffLight } from './devices/OnOffLight.js';
 import { OnOffButton } from './devices/OnOffButton.js';
+import { PressureSensor } from './devices/PressureSensor.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -153,7 +154,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           device = new HumiditySensor(structureSection, this);
           break;
         case 'contact':
-          this.log.info(`Creating contact sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+        case 'contactsensor':
+            this.log.info(`Creating contact sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new ContactSensor(structureSection, this);
           break;
         case 'occupancy':
@@ -162,6 +164,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.log.info(`Creating motion sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new MotionSensor(structureSection, this);
           break;
+        case 'shade':
         case 'shading':
           this.log.info(`Creating window covering for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new WindowShade(structureSection, this);
@@ -179,18 +182,24 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           device = new LightMood(structureSection, this, moodId, moodName);
           break;
         case 'smoke':
+        case 'smokesensor':
           this.log.info(`Creating smoke alarm for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           let supportsSmoke = structureSection.details.availableAlarms & 0x01;
           if (!supportsSmoke) continue;
           device = new SmokeAlarm(structureSection, this);
           break;
         case 'water':
-          this.log.info(`Creating water leak for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+        case 'waterleak':
+            this.log.info(`Creating water leak for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new WaterLeakSensor(structureSection, this);
           break;
         case 'lightsensor':
           this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new LightSensor(structureSection, this);
+          break;
+        case 'pressure':
+          this.log.info(`Creating pressure sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new PressureSensor(structureSection, this);
           break;
         case 'radio':
           let outputId = parseInt(uuidAndType.split(',')[2]);
