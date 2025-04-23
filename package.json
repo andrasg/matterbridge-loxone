@@ -2,6 +2,8 @@
   "name": "matterbridge-loxone",
   "version": "1.0.0",
   "description": "Loxone Matterbridge plugin",
+  "author": "Andras Gaal",
+  "license": "MIT",
   "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -35,8 +37,6 @@
     "matterbridge",
     "loxone"
   ],
-  "author": "Andras Gaal",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/andrasg/matterbridge-loxone/issues"
   },
