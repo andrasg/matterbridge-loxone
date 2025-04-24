@@ -21,6 +21,7 @@ import { OnOffLight } from './devices/OnOffLight.js';
 import { OnOffButton } from './devices/OnOffButton.js';
 import { PressureSensor } from './devices/PressureSensor.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
+import { DoorLockDevice } from './devices/DoorLock.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -206,6 +207,11 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         case 'pressure':
           this.log.info(`Creating pressure sensor for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new PressureSensor(structureSection, this);
+          break;
+        case 'lock':
+        case 'doorlock':
+          this.log.info(`Creating door lock device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new DoorLockDevice(structureSection, this);
           break;
         case 'radio': {
           const outputId = parseInt(uuidAndType.split(',')[2]);
