@@ -37,6 +37,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private structureFile: any | undefined = undefined;
   private isPluginConfigured = false;
+  private isConfigValid = false;
   public initialUpdateEvents: LoxoneUpdateEvent[] = [];
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
@@ -71,6 +72,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       return;
     }
 
+    this.isConfigValid = true;
+
     // setup the connection to Loxone
     this.loxoneConnection = new LoxoneConnection(this.loxoneIP, this.loxonePort, this.loxoneUsername, this.loxonePassword, this.log);
     this.loxoneConnection.on('get_structure_file', this.onGetStructureFile.bind(this));
@@ -92,6 +95,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   }
 
   override async onStart(reason?: string) {
+    if (!this.isConfigValid) {
+      throw new Error('Plugin not configured yet, configure first, then restart.');
+    }
+
     this.log.info(`Starting Loxone dynamic platform v${this.version}: ` + reason);
     await this.createDevices();
 
