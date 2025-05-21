@@ -1,11 +1,13 @@
-import { AtLeastOne, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands, PowerSource } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
-import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
+import { DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
+import { AtLeastOne } from 'matterbridge/matter';
+import { PowerSource } from 'matterbridge/matter/clusters';
 import { createHash } from 'node:crypto';
 import { BatteryLevelInfo } from '../data/BatteryLevelInfo.js';
 import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
+import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import { LoxonePlatform } from '../platform.js';
+import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
