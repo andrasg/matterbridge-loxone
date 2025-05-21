@@ -168,16 +168,24 @@ abstract class LoxoneDevice {
    * @param loxoneCommandFormatter Optional function to generate the Loxone command.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public addLoxoneAttributeSubscription(cluster: ClusterId, attribute: string, loxoneCommandFormatter: (newValue: any, oldValue: any) => string | undefined) {
+  public addLoxoneAttributeSubscription(cluster: ClusterId, attribute: string, loxoneCommandFormatter: (newValue: any, oldValue: any) => string | string[] | undefined) {
     // prepare the loxone command
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const delegate = (newValue: any, oldValue: any) => {
-      const commandString = loxoneCommandFormatter(newValue, oldValue);
-      if (commandString === undefined) {
+      let commandStrings = loxoneCommandFormatter(newValue, oldValue);
+
+      if (commandStrings === undefined) {
         return;
       }
-      this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-      this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
+
+      if (!Array.isArray(commandStrings)) {
+        commandStrings = [commandStrings];
+      }
+
+      for (const commandString of commandStrings) {
+        this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
+        this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
+      }
     };
 
     // register the attribute subscription
@@ -218,7 +226,7 @@ abstract class LoxoneDevice {
   /**
    * Asks the device to set its attributes from its internal state. Used in the onConfigure event.
    */
-  abstract setState(): Promise<void>;
+  abstract populateInitialState(): Promise<void>;
 
   public async restoreState() {
     if (this.batteryUUID !== undefined) {
@@ -228,7 +236,7 @@ abstract class LoxoneDevice {
       }
     }
 
-    await this.setState();
+    await this.populateInitialState();
   }
 
   public getLatestValueEvent(uuid: string): LoxoneValueUpdateEvent | undefined {

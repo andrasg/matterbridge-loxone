@@ -49,7 +49,7 @@ class SmokeAlarm extends LoxoneDevice {
     await this.updateAttributesFromInternalState();
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestCause = this.getLatestValueEvent(this.structureSection.states.level);
     const latestLevel = this.getLatestValueEvent(this.structureSection.states.alarmCause);
 

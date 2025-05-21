@@ -30,7 +30,7 @@ abstract class OnOffDevice extends LoxoneDevice {
     await this.updateAttributesFromLoxoneEvent(event);
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestValueEvent = this.getLatestValueEvent(this.StatusUUIDs[0]);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);

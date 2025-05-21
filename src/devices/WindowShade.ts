@@ -129,7 +129,7 @@ class WindowShade extends LoxoneDevice {
     }, 100);
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
 
     if (!latestValueEvent) {

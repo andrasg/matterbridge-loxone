@@ -64,7 +64,7 @@ class LightMood extends LoxoneDevice {
     return mood;
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestActiveMoodsEvent = this.getLatestTextEvent(this.structureSection.states.activeMoods);
 
     if (!latestActiveMoodsEvent) {

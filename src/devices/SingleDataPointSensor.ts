@@ -39,7 +39,7 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
     await this.updateAttributesFromLoxoneEvent(event);
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.active);
     if (!latestValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);

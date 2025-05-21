@@ -40,7 +40,7 @@ class RadioButton extends LoxoneDevice {
     this.updateAttributesFromLoxoneEvent(event);
   }
 
-  override async setState() {
+  override async populateInitialState() {
     const latestActiveOutputEvent = this.getLatestValueEvent(this.structureSection.states.activeOutput);
 
     if (!latestActiveOutputEvent) {
