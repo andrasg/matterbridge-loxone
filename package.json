@@ -1,6 +1,6 @@
 {
   "name": "matterbridge-loxone",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Loxone Matterbridge plugin",
   "author": "Andras Gaal",
   "license": "MIT",
