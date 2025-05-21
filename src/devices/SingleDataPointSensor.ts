@@ -1,8 +1,9 @@
-import { bridgedNode, powerSource, DeviceTypeDefinition, ClusterId } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { bridgedNode, DeviceTypeDefinition, powerSource } from 'matterbridge';
+import { ClusterId } from 'matterbridge/matter';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
-import { LoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import { LoxonePlatform } from '../platform.js';
+import { LoxoneDevice } from './LoxoneDevice.js';
 
 abstract class SingleDataPointSensor extends LoxoneDevice {
   clusterId: ClusterId;
