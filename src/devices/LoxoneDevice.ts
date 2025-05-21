@@ -38,6 +38,7 @@ abstract class LoxoneDevice {
     typeName: string,
     uniqueStorageKey: string,
     nameOverride: string | undefined = undefined,
+    endpointOverride: MatterbridgeEndpoint | undefined = undefined,
   ) {
     this.structureSection = structureSection;
     this.StatusUUIDs = statusUUIDs;
@@ -50,7 +51,7 @@ abstract class LoxoneDevice {
     this.uniqueStorageKey = uniqueStorageKey;
 
     // create the endpoint
-    this.Endpoint = this.createDefaultEndpoint();
+    this.Endpoint = endpointOverride ?? this.createDefaultEndpoint();
 
     // pre-populate with events from the initial update events list
     for (const uuid of this.StatusUUIDs) {

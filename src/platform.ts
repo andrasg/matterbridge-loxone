@@ -21,6 +21,7 @@ import { OnOffLight } from './devices/OnOffLight.js';
 import { OnOffButton } from './devices/OnOffButton.js';
 import { PressureSensor } from './devices/PressureSensor.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
+import { AirConditioner } from './devices/AirConditioner.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -221,6 +222,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           device = new RadioButton(structureSection, this, outputId, outputName);
           break;
         }
+        case 'ac':
+          this.log.info(`Creating air conditioner for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new AirConditioner(structureSection, this);
+          break;
         default:
           this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           continue;
