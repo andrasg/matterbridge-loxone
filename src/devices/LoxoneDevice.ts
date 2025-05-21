@@ -1,5 +1,5 @@
 import { DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
-import { AtLeastOne } from 'matterbridge/matter';
+import { AtLeastOne, ClusterId } from 'matterbridge/matter';
 import { PowerSource } from 'matterbridge/matter/clusters';
 import { createHash } from 'node:crypto';
 import { BatteryLevelInfo } from '../data/BatteryLevelInfo.js';
@@ -159,6 +159,29 @@ abstract class LoxoneDevice {
 
     // register the delegate for the event
     this.Endpoint.addCommandHandler(event, delegate);
+  }
+
+  /**
+   * Registers a Loxone atrtibute subscription. The command will be sent to the Loxone API.
+   * @param cluster The cluster where the attribute is located.
+   * @param attribite The name of the attribute to be subscribed to.
+   * @param loxoneCommandFormatter Optional function to generate the Loxone command.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public addLoxoneAttributeSubscription(cluster: ClusterId, attribute: string, loxoneCommandFormatter: (newValue: any, oldValue: any) => string | undefined) {
+    // prepare the loxone command
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const delegate = (newValue: any, oldValue: any) => {
+      const commandString = loxoneCommandFormatter(newValue, oldValue);
+      if (commandString === undefined) {
+        return;
+      }
+      this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
+      this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
+    };
+
+    // register the attribute subscription
+    this.Endpoint.subscribeAttribute(cluster, attribute, delegate, this.Endpoint.log);
   }
 
   /**
