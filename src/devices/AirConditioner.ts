@@ -35,7 +35,7 @@ class AirConditioner extends LoxoneDevice {
       .createDeadFrontOnOffClusterServer(state)
       .createDefaultThermostatClusterServer(latestCurrentTemperatureValueEvent?.value, latestTargetTemperatureValueEvent?.value, latestTargetTemperatureValueEvent?.value)
       .createDefaultThermostatUserInterfaceConfigurationClusterServer()
-      .createDefaultFanControlClusterServer(FanControl.FanMode.Auto)
+      .createDefaultFanControlClusterServer()
       .createDefaultTemperatureMeasurementClusterServer(currentTemperature);
 
     this.addLoxoneCommandHandler('on');
@@ -105,6 +105,9 @@ class AirConditioner extends LoxoneDevice {
         break;
       }
       case this.structureSection.states.fan:
+        await this.Endpoint.setAttribute(FanControl.Cluster.id, 'fanMode', FanControl.FanMode.Auto, this.Endpoint.log);
+        await this.Endpoint.setAttribute(FanControl.Cluster.id, 'percentSetting', null, this.Endpoint.log);
+        break;
       case this.structureSection.states.silentMode:
       default:
     }
