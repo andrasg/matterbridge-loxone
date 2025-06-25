@@ -8,6 +8,7 @@ import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { LoxonePlatform } from '../platform.js';
 import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
+import { CommandData } from '../utils/CommandData.js';
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
@@ -142,7 +143,7 @@ abstract class LoxoneDevice {
    * @param event One of {@link MatterbridgeEndpointCommands}.
    * @param loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link command} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler(event: keyof MatterbridgeEndpointCommands, loxoneCommandFormatter?: (...args: never[]) => string) {
+  public addLoxoneCommandHandler(event: keyof MatterbridgeEndpointCommands, loxoneCommandFormatter?: (data: CommandData) => string) {
     // if the formatter is not provided, use the event name as the command
     if (loxoneCommandFormatter === undefined) {
       loxoneCommandFormatter = () => {
@@ -151,8 +152,8 @@ abstract class LoxoneDevice {
     }
 
     // delegate for executing the loxone command
-    const delegate = (...args: never[]) => {
-      const commandString = loxoneCommandFormatter?.(...args);
+    const delegate = (data: CommandData) => {
+      const commandString = loxoneCommandFormatter?.(data);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
       this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
     };
