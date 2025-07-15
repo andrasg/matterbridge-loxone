@@ -36,6 +36,21 @@ jobs:
       - name: Link matterbridge
         run: npm link matterbridge
 
+      - name: Extract version from release
+        id: get_version
+        run: |
+          # Extract version from tag name (remove 'v' prefix if present)
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Update package.json version
+        run: |
+          # Update the version in package.json
+          npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version
+          echo "Updated package.json to version ${{ steps.get_version.outputs.version }}"
+
       - name: Lint the project
         run: npm run lint
 
