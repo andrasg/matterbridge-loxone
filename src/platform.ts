@@ -22,6 +22,7 @@ import { OnOffButton } from './devices/OnOffButton.js';
 import { PressureSensor } from './devices/PressureSensor.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
 import { AirConditioner } from './devices/AirConditioner.js';
+import { PushButton } from './devices/PushButton.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public debugEnabled: boolean;
@@ -125,6 +126,15 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
+    if (this.loxoneUUIDsAndTypes.length !== 0) {
+      while (this.initialUpdateEvents.length === 0) {
+        this.log.info('Waiting for initial update events to arrive from Loxone...');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    this.log.info('Creating devices...');
+
     for (const uuidAndType of this.loxoneUUIDsAndTypes) {
       const uuid = uuidAndType.split(',')[0];
       const type = uuidAndType.split(',')[1];
@@ -145,8 +155,12 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           device = new OnOffSwitch(structureSection, this);
           break;
         case 'button':
-          this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          this.log.info(`Creating button device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
           device = new OnOffButton(structureSection, this);
+          break;
+        case 'pushbutton':
+          this.log.info(`Creating push button for Loxone control with UUID ${uuid}: ${structureSection.name}`);
+          device = new PushButton(structureSection, this);
           break;
         case 'outlet':
           this.log.info(`Creating outlet device for Loxone control with UUID ${uuid}: ${structureSection.name}`);
