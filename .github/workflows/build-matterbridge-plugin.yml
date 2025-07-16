@@ -2,6 +2,7 @@ name: Build and lint
 
 on:
     push:
+        branches: ['main']
         tags-ignore:
             - 'v*'
     pull_request:
