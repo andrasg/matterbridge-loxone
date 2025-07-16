@@ -8,7 +8,7 @@ abstract class LoxoneUpdateEvent {
     this.date = new Date();
   }
 
-  abstract toText(): string;
+  abstract valueString(): string;
 }
 
 export { LoxoneUpdateEvent };

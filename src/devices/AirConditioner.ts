@@ -84,29 +84,29 @@ class AirConditioner extends LoxoneDevice {
     switch (event.uuid) {
       case this.structureSection.states.status: {
         const state = Converters.onOffValueConverter(event);
-        await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', state, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', state, this.Endpoint.log);
         break;
       }
       case this.structureSection.states.targetTemperature: {
         const targetTemperature = Converters.temperatureValueConverter(event);
-        await this.Endpoint.setAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', targetTemperature, this.Endpoint.log);
-        await this.Endpoint.setAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint', targetTemperature, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', targetTemperature, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint', targetTemperature, this.Endpoint.log);
         break;
       }
       case this.structureSection.states.temperature: {
         const temperature = Converters.temperatureValueConverter(event);
-        await this.Endpoint.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', temperature, this.Endpoint.log);
-        await this.Endpoint.setAttribute(Thermostat.Cluster.id, 'localTemperature', temperature, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', temperature, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'localTemperature', temperature, this.Endpoint.log);
         break;
       }
       case this.structureSection.states.mode: {
         const mode = Converters.systemModeValueConverter(event);
-        await this.Endpoint.setAttribute(Thermostat.Cluster.id, 'systemMode', mode, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'systemMode', mode, this.Endpoint.log);
         break;
       }
       case this.structureSection.states.fan:
-        await this.Endpoint.setAttribute(FanControl.Cluster.id, 'fanMode', FanControl.FanMode.Auto, this.Endpoint.log);
-        await this.Endpoint.setAttribute(FanControl.Cluster.id, 'percentSetting', null, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(FanControl.Cluster.id, 'fanMode', FanControl.FanMode.Auto, this.Endpoint.log);
+        await this.Endpoint.updateAttribute(FanControl.Cluster.id, 'percentSetting', null, this.Endpoint.log);
         break;
       case this.structureSection.states.silentMode:
       default:

@@ -51,7 +51,7 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
     const value = this.valueConverter(event);
-    await this.Endpoint.setAttribute(this.clusterId, this.attributeName, value, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(this.clusterId, this.attributeName, value, this.Endpoint.log);
   }
 }
 

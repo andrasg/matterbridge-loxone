@@ -1,5 +1,6 @@
 import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
-import { AnsiLogger, CYAN, LogLevel, nf } from 'matterbridge/logger';
+import { AnsiLogger, BLUE, GREY, YELLOW, LogLevel } from 'matterbridge/logger';
+import { CYAN, nf } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
 import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
@@ -31,7 +32,9 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public loxonePassword: string | undefined = undefined;
   public loxoneConnection!: LoxoneConnection;
   public roomMapping: Map<string, string> = new Map<string, string>();
+  private uuidToLogLineMap: Map<string, string> = new Map<string, string>();
   private loxoneUUIDsAndTypes: string[] = [];
+  private logEvents = false;
   private debug = false;
   private statusDevices = new Map<string, LoxoneDevice[]>();
   private allDevices: LoxoneDevice[] = [];
@@ -44,19 +47,21 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
     super(matterbridge, log, config);
 
-    this.log.info('Initializing Loxone platform');
-    this.log.info(`Code build from branch '${GIT_BRANCH}', commit '${GIT_COMMIT}'`);
-
     if (config.debug) {
       this.debug = true;
-      this.log.logLevel = this.config.debug ? LogLevel.DEBUG : LogLevel.INFO;
+      this.log.info(`${YELLOW}Plugin is running in debug mode${nf}`);
     }
+    this.log.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
+
+    this.log.info('Initializing Loxone platform');
+    this.log.debug(`Code build from branch '${GIT_BRANCH}', commit '${GIT_COMMIT}'`);
 
     if (config.host) this.loxoneIP = config.host as string;
     if (config.port) this.loxonePort = config.port as number;
     if (config.username) this.loxoneUsername = config.username as string;
     if (config.password) this.loxonePassword = config.password as string;
     if (config.uuidsandtypes) this.loxoneUUIDsAndTypes = config.uuidsandtypes as string[];
+    if (config.logevents) this.logEvents = config.logevents as boolean;
 
     // validate the Loxone config
     if (!isValidString(this.loxoneIP)) {
@@ -91,10 +96,23 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.structureFile = filedata;
     this.log.info(`Got structure file, last modified: ${filedata.lastModified}`);
 
+    // store a map of room UUIDs to room names
     for (const uuid in this.structureFile.rooms) {
       const room = this.structureFile.rooms[uuid];
-      this.log.info(`Found Loxone room with UUID ${uuid}, name ${room.name}`);
+      this.log.debug(`Found Loxone room with UUID ${uuid}, name ${room.name}`);
       this.roomMapping.set(uuid, room.name);
+    }
+    this.log.info(`Found ${this.roomMapping.size} rooms in the structure file.`);
+
+    // create a map of potential event UUIDs to room and control names with state names
+    for (const controlUuid in this.structureFile.controls) {
+      const controlSection = this.structureFile.controls[controlUuid];
+      const roomName = this.roomMapping.get(controlSection.room);
+      for (const stateKey in controlSection.states) {
+        const stateUuid = controlSection.states[stateKey];
+        const logLine = `${roomName}/${controlSection.name}/${stateKey}`;
+        this.uuidToLogLineMap.set(stateUuid, logLine);
+      }
     }
   }
 
@@ -103,7 +121,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       throw new Error('Plugin not configured yet, configure first, then restart.');
     }
 
-    this.log.info(`Starting Loxone dynamic platform v${this.version}: ` + reason);
+    this.log.info(`Starting Loxone dynamic platform ${YELLOW}v${this.version}${nf}: ${reason}`);
     await this.createDevices();
 
     await this.ready;
@@ -148,7 +166,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
       const structureSection = this.structureFile.controls[uuid];
       const roomname = this.structureFile.rooms[structureSection.room].name;
-      this.log.info(`Found Loxone control with UUID ${uuid} type ${structureSection.type}, name ${structureSection.name} in room ${roomname}`);
+      this.log.debug(`Found Loxone control with UUID ${uuid} type ${structureSection.type}, name ${structureSection.name} in room ${roomname}`);
 
       let device: LoxoneDevice;
       switch (type.toLowerCase()) {
@@ -300,15 +318,22 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
   async handleLoxoneEvent(event: LoxoneUpdateEvent) {
     // store event in the initial cache if the plugin is not configured yet
-    if (!this.isPluginConfigured) this.initialUpdateEvents.push(event);
+    if (!this.isPluginConfigured) {
+      this.initialUpdateEvents.push(event);
+    }
 
     const devices = this.statusDevices.get(event.uuid);
-    if (!devices) return;
+    if (!devices) {
+      if (this.logEvents) {
+        const logLine = this.uuidToLogLineMap.get(event.uuid);
+        this.log.debug(`Event from Loxone: ${BLUE}${logLine}${nf} (${GREY}${event.uuid}${nf}) = ${YELLOW}${event.valueString()}${nf}`);
+      }
+      return;
+    }
 
     for (const device of devices) {
       if (!device.StatusUUIDs.includes(event.uuid)) continue;
 
-      this.log.info(`Loxone event received: ${event.toText()}, handing it off to device ${device.longname}`);
       device.handleUpdateEvent(event);
     }
   }

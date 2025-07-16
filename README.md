@@ -42,6 +42,8 @@ The plugin needs to be configured before use with the following values:
 - username - the username to use for connecting
 - passowrd - the passowrd to use for connecting
 - uuidsandtypes - list of UUID's and types to map to matter devices
+- logevents - when enabled, log will contain all received Loxone events, not just the ones that have been configured (careful, lot of log!)
+- debug - enables debug mode on the plugin
 
 ### UUID and type mapping
 
@@ -63,10 +65,11 @@ The plugin supports the following types
 |outlet|switch (outlet)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |light|switch (light)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|dimmer|dimmable light|LightControllerV2 circuit|none|UUID needs to be in the format `<UUID>/AIxx`
-|mood|switch (light)|LightControllerV2 mood|ID of the mood||
-|radio|switch|Radiobutton|output number of the radio button||
-|smoke|smoke alarm|Smoke and Water alarm|none||
+|dimmer|dimmable light|`LightControllerV2` circuit|none|UUID needs to be in the format `<UUID>/AIxx`
+|mood|switch (light)|`LightControllerV2` mood|ID of the mood||
+|radio|switch|`Radio`|output number of the radio button||
+|smoke|smoke alarm|`SmokeAlarm`|none||
+|ac|airconditioner|`AcControl` device|none||
 
 Additionally, all devices support specifying remaining battery %, by appending:
 `,battery_<batterystatusUUID>` to the end of the UUID and type string.

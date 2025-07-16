@@ -77,7 +77,7 @@ class LightMood extends LoxoneDevice {
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneTextUpdateEvent) {
     const currentState = this.calculateState(event);
-    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
   }
 }
 

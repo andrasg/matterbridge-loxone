@@ -41,7 +41,7 @@ abstract class OnOffDevice extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
   }
 }
 

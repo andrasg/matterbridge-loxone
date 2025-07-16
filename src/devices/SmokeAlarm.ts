@@ -66,7 +66,7 @@ class SmokeAlarm extends LoxoneDevice {
 
   private async updateAttributesFromInternalState() {
     const alarmState = this.calculateAlarmState();
-    await this.Endpoint.setAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
   }
 }
 

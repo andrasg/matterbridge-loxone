@@ -24,7 +24,7 @@ class OnOffButton extends LoxoneDevice {
 
     this.addLoxoneCommandHandler('on', () => {
       setTimeout(() => {
-        this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', false, this.Endpoint.log);
+        this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', false, this.Endpoint.log);
       }, 1000);
       return 'pulse';
     });
@@ -48,7 +48,7 @@ class OnOffButton extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
   }
 }
 

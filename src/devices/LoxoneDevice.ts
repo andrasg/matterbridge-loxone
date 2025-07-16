@@ -9,6 +9,7 @@ import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { LoxonePlatform } from '../platform.js';
 import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
 import { CommandData } from '../utils/CommandData.js';
+import { BLUE, GREY, nf, YELLOW } from 'matterbridge/logger';
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
@@ -23,7 +24,6 @@ abstract class LoxoneDevice {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public structureSection: any;
   public roomname: string;
-  public name: string;
   public longname: string;
   public platform: LoxonePlatform;
   public typeName: string;
@@ -31,6 +31,7 @@ abstract class LoxoneDevice {
   public uniqueStorageKey: string;
   private batteryUUID: string | undefined;
   public latestEventMap: Map<string, LoxoneUpdateEvent | undefined> = new Map<string, LoxoneUpdateEvent | undefined>();
+  private uuidToStateNameMap: Map<string, string> = new Map<string, string>();
 
   constructor(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,14 +41,24 @@ abstract class LoxoneDevice {
     statusUUIDs: string[],
     typeName: string,
     uniqueStorageKey: string,
-    nameOverride: string | undefined = undefined,
+    nameSuffix: string | undefined = undefined,
     endpointOverride: MatterbridgeEndpoint | undefined = undefined,
   ) {
     this.structureSection = structureSection;
     this.StatusUUIDs = statusUUIDs;
+    this.StatusUUIDs.forEach((uuid) => {
+      for (const key in this.structureSection.states) {
+        if (this.structureSection.states[key] === uuid) {
+          this.uuidToStateNameMap.set(uuid, key);
+          break;
+        }
+      }
+    });
     this.roomname = platform.roomMapping.get(this.structureSection.room) ?? 'Unknown';
-    this.name = nameOverride ?? this.structureSection.name;
-    this.longname = `${this.roomname} ${this.name}`;
+    this.longname = `${this.roomname}/${this.structureSection.name}`;
+    if (nameSuffix) {
+      this.longname += `/${nameSuffix}`;
+    }
     this.platform = platform;
     this.typeName = typeName;
     this.deviceTypeDefinitions = deviceTypeDefinitions;
@@ -204,6 +215,10 @@ abstract class LoxoneDevice {
       return;
     }
 
+    this.Endpoint.log.debug(
+      `Event from Loxone: ${BLUE}${this.uuidToStateNameMap.get(event.uuid) ?? 'unknown'}${nf} ${GREY}(${event.uuid})${nf} = ${YELLOW}${event.valueString()}${nf}`,
+    );
+
     // store (overwrite) the latest value in the event map
     this.latestEventMap.set(event.uuid, event);
 
@@ -214,8 +229,8 @@ abstract class LoxoneDevice {
   private async handleBatteryEvent(event: LoxoneValueUpdateEvent) {
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
 
-    await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batPercentRemaining', batteryLevelInfo.batteryRemaining, this.Endpoint.log);
-    await this.Endpoint.setAttribute(PowerSource.Cluster.id, 'batChargeLevel', batteryLevelInfo.batteryStatus, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(PowerSource.Cluster.id, 'batPercentRemaining', batteryLevelInfo.batteryRemaining, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(PowerSource.Cluster.id, 'batChargeLevel', batteryLevelInfo.batteryStatus, this.Endpoint.log);
   }
 
   /**

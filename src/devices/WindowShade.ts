@@ -19,7 +19,7 @@ class WindowShade extends LoxoneDevice {
       [coverDevice, bridgedNode, powerSource],
       [structureSection.states.position, structureSection.states.targetPosition, structureSection.states.up, structureSection.states.down],
       'window covering',
-      `${WindowShade.name}${structureSection.uuidAction.replace(/-/g, '_')}`,
+      `${WindowShade.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
     const latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
@@ -79,7 +79,7 @@ class WindowShade extends LoxoneDevice {
   private async handlePositionUpdate(event: LoxoneValueUpdateEvent) {
     this.currentPosition = event.value * 10000;
     this.Endpoint.log.info(`Current position: ${this.currentPosition}`);
-    await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
   }
 
   private handleDownwardMovement(event: LoxoneValueUpdateEvent) {
@@ -114,8 +114,8 @@ class WindowShade extends LoxoneDevice {
     setTimeout(async () => {
       this.Endpoint.log.info(`Updating operational status: ${this.operationalStatus}, target: ${this.targetPosition}`);
 
-      await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
-      await this.Endpoint.setAttribute(
+      await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
+      await this.Endpoint.updateAttribute(
         WindowCovering.Cluster.id,
         'operationalStatus',
         {
@@ -138,7 +138,7 @@ class WindowShade extends LoxoneDevice {
     }
     this.currentPosition = latestValueEvent.value * 10000;
 
-    await this.Endpoint.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
   }
 }
 

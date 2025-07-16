@@ -16,11 +16,9 @@ class LightSensor extends SingleDataPointSensor {
   }
 
   override valueConverter(event: LoxoneValueUpdateEvent | undefined): number {
-    return event ? this.luxToMatter(event.value) : 0;
-  }
+    if (!event) return 0;
 
-  private luxToMatter(lux: number): number {
-    return Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0));
+    return Math.round(Math.max(Math.min(10000 * Math.log10(event.value), 0xfffe), 0));
   }
 }
 

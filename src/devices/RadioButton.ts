@@ -52,7 +52,7 @@ class RadioButton extends LoxoneDevice {
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    await this.Endpoint.setAttribute(OnOff.Cluster.id, 'onOff', event.value === this.outputId, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === this.outputId, this.Endpoint.log);
   }
 }
 

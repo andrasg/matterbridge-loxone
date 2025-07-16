@@ -10,8 +10,8 @@ class LoxoneTextUpdateEvent extends LoxoneUpdateEvent {
     this.type = 'text';
   }
 
-  override toText(): string {
-    return `${this.uuid}: ${this.text}`;
+  override valueString(): string {
+    return this.text;
   }
 }
 

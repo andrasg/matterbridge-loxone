@@ -41,6 +41,11 @@
         "uniqueItems": true,
         "selectEntityFrom": "name"
       },
+      "logevents": {
+        "description": "Enable to dump all received Loxone events",
+        "type": "boolean",
+        "default": false
+      },
       "debug": {
         "description": "Enable the debug for the plugin (development only)",
         "type": "boolean",
