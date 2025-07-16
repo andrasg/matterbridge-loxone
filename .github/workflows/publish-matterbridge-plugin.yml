@@ -48,7 +48,7 @@ jobs:
       - name: Update package.json version
         run: |
           # Update the version in package.json
-          npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version
+          npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version --allow-same-version
           echo "Updated package.json to version ${{ steps.get_version.outputs.version }}"
 
       - name: Lint the project
