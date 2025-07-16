@@ -1,5 +1,5 @@
 import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
-import { AnsiLogger } from 'matterbridge/logger';
+import { AnsiLogger, CYAN, LogLevel, nf } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneConnection } from './services/LoxoneConnection.js';
 import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
@@ -25,7 +25,6 @@ import { AirConditioner } from './devices/AirConditioner.js';
 import { PushButton } from './devices/PushButton.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
-  public debugEnabled: boolean;
   public loxoneIP: string | undefined = undefined;
   public loxonePort: number | undefined = undefined;
   public loxoneUsername: string | undefined = undefined;
@@ -33,7 +32,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public loxoneConnection!: LoxoneConnection;
   public roomMapping: Map<string, string> = new Map<string, string>();
   private loxoneUUIDsAndTypes: string[] = [];
-
+  private debug = false;
   private statusDevices = new Map<string, LoxoneDevice[]>();
   private allDevices: LoxoneDevice[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,7 +47,10 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.log.info('Initializing Loxone platform');
     this.log.info(`Code build from branch '${GIT_BRANCH}', commit '${GIT_COMMIT}'`);
 
-    this.debugEnabled = config.debug as boolean;
+    if (config.debug) {
+      this.debug = true;
+      this.log.logLevel = this.config.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    }
 
     if (config.host) this.loxoneIP = config.host as string;
     if (config.port) this.loxonePort = config.port as number;
@@ -273,6 +275,20 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       // register with Matterbridge
       await device.registerWithPlatform();
     }
+  }
+
+  override async onChangeLoggerLevel(logLevel: LogLevel): Promise<void> {
+    if (this.debug) {
+      this.log.info('Plugin is running in debug mode, ignoring logger level change');
+      return;
+    }
+    this.log.info(`Setting platform logger level to ${CYAN}${logLevel}${nf}`);
+    this.log.logLevel = logLevel;
+
+    for (const bridgedDevice of this.allDevices) {
+      bridgedDevice.Endpoint.log.logLevel = logLevel;
+    }
+    this.log.debug('Changed logger level to ' + logLevel);
   }
 
   override async onShutdown(reason?: string) {
