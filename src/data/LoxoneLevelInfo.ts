@@ -18,17 +18,13 @@ class LoxoneLevelInfo {
 
     if (event instanceof LoxoneValueUpdateEvent) {
       this.loxoneLevel = event.value;
-      this.matterLevel = this.convertLoxoneValueToMatter(event.value);
-      this.onOff = event.value > 0;
-      return;
+    } else if (typeof event === 'number') {
+      this.loxoneLevel = event;
     }
 
-    if (typeof event === 'number') {
-      this.loxoneLevel = event;
-      this.matterLevel = this.convertLoxoneValueToMatter(event);
-      this.onOff = event > 0;
-      return;
-    }
+    this.matterLevel = this.convertLoxoneValueToMatter(this.loxoneLevel);
+    this.onOff = this.loxoneLevel !== 0;
+    return;
   }
 
   convertLoxoneValueToMatter(value: number): number {
