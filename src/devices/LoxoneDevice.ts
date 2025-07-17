@@ -7,9 +7,9 @@ import { LoxoneTextUpdateEvent } from '../data/LoxoneTextUpdateEvent.js';
 import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { LoxonePlatform } from '../platform.js';
-import { getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
+import { getAllEvents, getLatestEvent, getLatestValueEvent } from '../utils/Utils.js';
 import { CommandData } from '../utils/CommandData.js';
-import { BLUE, GREY, nf, YELLOW } from 'matterbridge/logger';
+import { BLUE, GREY, YELLOW } from 'matterbridge/logger';
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
@@ -67,10 +67,20 @@ abstract class LoxoneDevice {
     // create the endpoint
     this.Endpoint = endpointOverride ?? this.createDefaultEndpoint();
 
+    // log all cached events
+    getAllEvents<LoxoneUpdateEvent>(this.platform.initialUpdateEvents, this.StatusUUIDs).forEach((event) => {
+      const logLine = this.platform.uuidToLogLineMap.get(event.uuid);
+      this.Endpoint.log.debug(`Cached event: ${BLUE}${logLine}${GREY} (${event.uuid}) = ${YELLOW}${event.valueString()}${GREY}`);
+    });
+
     // pre-populate with events from the initial update events list
     for (const uuid of this.StatusUUIDs) {
       const latestEvent = getLatestEvent(this.platform.initialUpdateEvents, uuid);
       this.latestEventMap.set(uuid, latestEvent);
+      if (!latestEvent) {
+        const logLine = this.platform.uuidToLogLineMap.get(uuid);
+        this.Endpoint.log.warn(`No latest event found for ${logLine} (${uuid})`);
+      }
     }
   }
 
@@ -215,9 +225,7 @@ abstract class LoxoneDevice {
       return;
     }
 
-    this.Endpoint.log.debug(
-      `Event from Loxone: ${BLUE}${this.uuidToStateNameMap.get(event.uuid) ?? 'unknown'}${nf} ${GREY}(${event.uuid})${nf} = ${YELLOW}${event.valueString()}${nf}`,
-    );
+    this.Endpoint.log.debug(`Event from Loxone: ${BLUE}${this.uuidToStateNameMap.get(event.uuid) ?? 'unknown'}${GREY} (${event.uuid}) = ${YELLOW}${event.valueString()}${GREY}`);
 
     // store (overwrite) the latest value in the event map
     this.latestEventMap.set(event.uuid, event);
@@ -251,7 +259,7 @@ abstract class LoxoneDevice {
         await this.handleBatteryEvent(latestValueEvent);
       }
     }
-
+    this.Endpoint.log.debug(`Restoring state`);
     await this.populateInitialState();
   }
 

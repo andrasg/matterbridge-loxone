@@ -15,7 +15,7 @@ export function getEvents<T extends LoxoneUpdateEvent>(events: LoxoneUpdateEvent
 export function getLatestEvent<T extends LoxoneUpdateEvent>(events: LoxoneUpdateEvent[], uuidFilter: string | undefined = undefined): T | undefined {
   return events
     .sort((a, b) => {
-      return b.date.getMilliseconds() - a.date.getMilliseconds();
+      return b.date.getTime() - a.date.getTime();
     })
     .find<T>((event): event is T => {
       if (uuidFilter !== undefined) {
@@ -23,6 +23,24 @@ export function getLatestEvent<T extends LoxoneUpdateEvent>(events: LoxoneUpdate
       } else {
         return true;
       }
+    });
+}
+
+export function getAllEvents<T extends LoxoneUpdateEvent>(events: LoxoneUpdateEvent[], uuidFilter: string[] | string | undefined = undefined): T[] {
+  return events
+    .filter<T>((event): event is T => {
+      if (uuidFilter !== undefined) {
+        if (Array.isArray(uuidFilter)) {
+          return uuidFilter.includes(event.uuid);
+        } else {
+          return event.uuid === uuidFilter;
+        }
+      } else {
+        return true;
+      }
+    })
+    .sort((a, b) => {
+      return b.date.getTime() - a.date.getTime();
     });
 }
 
