@@ -6,6 +6,14 @@ on:
         tags-ignore:
             - 'v*'
     pull_request:
+    repository_dispatch:
+        types: [matterbridge-updated, critical-dependency-updated]
+    workflow_dispatch:
+        inputs:
+            reason:
+                description: 'Reason for manual trigger'
+                required: false
+                default: 'Manual upstream check'
     
 concurrency:
   group: ${{ github.ref }}
@@ -23,6 +31,35 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
+      - name: Check if relevant dependencies changed
+        id: check-deps
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          # Define critical dependencies that should trigger builds
+          CRITICAL_DEPS=("matterbridge")
+          
+          # Check if the dispatch includes dependency info
+          if [[ "${{ github.event.client_payload.dependency }}" != "" ]]; then
+            CHANGED_DEP="${{ github.event.client_payload.dependency }}"
+            echo "Dependency changed: $CHANGED_DEP"
+            
+            # Check if it's in our critical list
+            for dep in "${CRITICAL_DEPS[@]}"; do
+              if [[ "$CHANGED_DEP" == "$dep"* ]]; then
+                echo "Critical dependency changed: $dep"
+                echo "SHOULD_BUILD=true" >> $GITHUB_ENV
+                exit 0
+              fi
+            done
+            
+            echo "Non-critical dependency changed, skipping build"
+            echo "SHOULD_BUILD=false" >> $GITHUB_ENV
+            exit 1
+          else
+            echo "No dependency info provided, proceeding with build"
+            echo "SHOULD_BUILD=true" >> $GITHUB_ENV
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
