@@ -11,7 +11,7 @@
 [![power by](https://img.shields.io/badge/powered%20by-node--lox--ws--api-blue)](https://www.npmjs.com/package/node-lox-ws-api)
 
 
-A [matterbridge](https://github.com/Luligu/matterbridge) plugin allowing connecting Loxone devices to Matter.
+A [matterbridge](https://github.com/Luligu/matterbridge) plugin allowing connecting Loxone devices to Matter. The plugin was mostly tested against Apple Home but should work wirh any Matter-compatible ecosystems.
 
 As the plugin uses Loxone websocket connection, it can be used with all generations of Loxone Miniserver, including Gen.1.
 
