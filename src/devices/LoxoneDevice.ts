@@ -72,6 +72,12 @@ abstract class LoxoneDevice {
       this.Endpoint.log.debug(`Cached event: ${BLUE}${logLine}${GREY} (${event.uuid}) = ${YELLOW}${event.valueString()}${GREY}`);
     });
 
+    // log all cached events
+    getAllEvents<LoxoneUpdateEvent>(this.platform.initialUpdateEvents, this.StatusUUIDs).forEach((event) => {
+      const logLine = this.platform.uuidToLogLineMap.get(event.uuid);
+      this.Endpoint.log.debug(`Cached event: ${BLUE}${logLine}${GREY} (${event.uuid}) = ${YELLOW}${event.valueString()}${GREY}`);
+    });
+
     // pre-populate with events from the initial update events list
     for (const uuid of this.StatusUUIDs) {
       const latestEvent = getLatestEvent(this.platform.initialUpdateEvents, uuid);
