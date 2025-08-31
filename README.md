@@ -30,7 +30,7 @@ This plugin supports the following Loxone device types
 
 ## Installation
 
-Install this plugin using the matterbridge web UI by typing `matter-bridgeloxone` into the Install plugins section and clicking the Install button.
+Install this plugin using the matterbridge web UI by typing `matterbridge-loxone` into the Install plugins section and clicking the Install button.
 
 > Don't forget to restart matterbridge afterwards.
 
