@@ -57,7 +57,29 @@ jobs:
       - name: Build the project
         run: npm run build
 
+      - name: Determine npm dist-tag
+        id: determine_dist_tag
+        run: |
+          # Determine dist tag for npm publish.
+          # If the GitHub release is marked as prerelease, try to use the pre-release identifier
+          # (e.g. v1.2.3-alpha.1 => tag "alpha"). Otherwise use "latest".
+          # As a fallback for prerelease without a suffix use "next".
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            if [[ "$VERSION" == *"-"* ]]; then
+              PR=${VERSION#*-}
+              LABEL=${PR%%.*}
+              echo "dist_tag=$LABEL" >> $GITHUB_OUTPUT
+            else
+              echo "dist_tag=next" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "dist_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --tag ${{ steps.determine_dist_tag.outputs.dist_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
