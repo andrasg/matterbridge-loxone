@@ -2,7 +2,6 @@ import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matte
 import { AnsiLogger, BLUE, GREY, YELLOW, LogLevel } from 'matterbridge/logger';
 import { CYAN, nf } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
-import { LoxoneConnection } from './services/LoxoneConnection.js';
 import { LoxoneUpdateEvent } from './data/LoxoneUpdateEvent.js';
 import { TemperatureSensor } from './devices/TemperatureSensor.js';
 import { LoxoneDevice } from './devices/LoxoneDevice.js';
@@ -24,13 +23,18 @@ import { PressureSensor } from './devices/PressureSensor.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
 import { AirConditioner } from './devices/AirConditioner.js';
 import { PushButton } from './devices/PushButton.js';
+import LoxoneClient from 'loxone-ts-api';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import { LoxoneValueUpdateEvent } from './data/LoxoneValueUpdateEvent.js';
+import { LoxoneTextUpdateEvent } from './data/LoxoneTextUpdateEvent.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public loxoneIP: string | undefined = undefined;
   public loxonePort: number | undefined = undefined;
   public loxoneUsername: string | undefined = undefined;
   public loxonePassword: string | undefined = undefined;
-  public loxoneConnection!: LoxoneConnection;
+  public loxoneClient: LoxoneClient;
   public roomMapping: Map<string, string> = new Map<string, string>();
   public uuidToLogLineMap: Map<string, string> = new Map<string, string>();
   private loxoneUUIDsAndTypes: string[] = [];
@@ -65,35 +69,29 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
     // validate the Loxone config
     if (!isValidString(this.loxoneIP)) {
-      this.log.error('Loxone host is not set.');
-      return;
+      throw new Error('Loxone host is not set.');
     }
     if (!isValidNumber(this.loxonePort, 1, 65535)) {
-      this.log.error('Loxone port is not set.');
-      return;
+      throw new Error('Loxone port is not set.');
     }
     if (!isValidString(this.loxoneUsername)) {
-      this.log.error('Loxone username is not set.');
-      return;
+      throw new Error('Loxone username is not set.');
     }
     if (!isValidString(this.loxonePassword)) {
-      this.log.error('Loxone password is not set.');
-      return;
+      throw new Error('Loxone password is not set.');
     }
 
     this.isConfigValid = true;
 
+    this.loxoneClient = new LoxoneClient(`${this.loxoneIP}:${this.loxonePort}`, this.loxoneUsername, this.loxonePassword);
+
     // setup the connection to Loxone
-    this.loxoneConnection = new LoxoneConnection(this.loxoneIP, this.loxonePort, this.loxoneUsername, this.loxonePassword, this.log);
-    this.loxoneConnection.on('get_structure_file', this.onGetStructureFile.bind(this));
-    this.loxoneConnection.on('update_value', this.handleLoxoneEvent.bind(this));
-    this.loxoneConnection.on('update_text', this.handleLoxoneEvent.bind(this));
+    this.loxoneClient.on('event_value', this.handleLoxoneValueEvent.bind(this));
+    this.loxoneClient.on('event_text', this.handleLoxoneTextEvent.bind(this));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onGetStructureFile(filedata: any) {
-    this.structureFile = filedata;
-    this.log.info(`Got structure file, last modified: ${filedata.lastModified}`);
+  parseStructureFile() {
+    this.log.info(`Got structure file, last modified: ${this.structureFile.lastModified}`);
 
     // store a map of room UUIDs to room names
     this.log.info(`Processing rooms...`);
@@ -123,12 +121,15 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
     this.log.info(`Starting Loxone dynamic platform ${YELLOW}v${this.version}${nf}: ${reason}`);
 
-    this.loxoneConnection.connect();
+    // initiate connection
+    await this.loxoneClient.connect();
 
-    while (this.structureFile === undefined) {
-      this.log.info('Waiting for structure file to be received from Loxone...');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    // get Loxone structure file and parse it
+    this.structureFile = await this.loxoneClient.getStructureFile();
+    this.parseStructureFile();
+
+    // start Loxone event streaming
+    await this.loxoneClient.enableUpdates();
 
     this.log.info('Sleeping for 5 seconds for initial events to arrive...');
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -328,7 +329,16 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     await super.onShutdown(reason);
     this.log.info('Shutting down Loxone platform: ' + reason);
 
-    if (this.loxoneConnection && this.loxoneConnection.isConnected()) this.loxoneConnection.disconnect();
+    // cleanup Loxone connection and token
+    if (this.loxoneClient) await this.loxoneClient.disconnect();
+  }
+
+  private async handleLoxoneValueEvent(event: LoxoneValueEvent) {
+    await this.handleLoxoneEvent(new LoxoneValueUpdateEvent(event.uuid.toString(), event.value));
+  }
+
+  private async handleLoxoneTextEvent(event: LoxoneTextEvent) {
+    await this.handleLoxoneEvent(new LoxoneTextUpdateEvent(event.uuid.toString(), event.text));
   }
 
   async handleLoxoneEvent(event: LoxoneUpdateEvent) {

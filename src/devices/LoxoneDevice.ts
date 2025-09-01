@@ -178,10 +178,10 @@ abstract class LoxoneDevice {
     }
 
     // delegate for executing the loxone command
-    const delegate = (data: CommandData) => {
+    const delegate = async (data: CommandData) => {
       const commandString = loxoneCommandFormatter?.(data);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-      this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
+      await this.platform.loxoneClient.control(this.structureSection.uuidAction, commandString);
     };
 
     // register the delegate for the event
@@ -198,7 +198,7 @@ abstract class LoxoneDevice {
   public addLoxoneAttributeSubscription(cluster: ClusterId, attribute: string, loxoneCommandFormatter: (newValue: any) => string | string[] | undefined) {
     // prepare the loxone command
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-    const delegate = (newValue: any, oldValue: any, context?: any) => {
+    const delegate = async (newValue: any, oldValue: any, context?: any) => {
       let commandStrings = loxoneCommandFormatter(newValue);
 
       if (commandStrings === undefined) {
@@ -211,7 +211,7 @@ abstract class LoxoneDevice {
 
       for (const commandString of commandStrings) {
         this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-        this.platform.loxoneConnection.sendCommand(this.structureSection.uuidAction, commandString);
+        await this.platform.loxoneClient.control(this.structureSection.uuidAction, commandString);
       }
     };
 
