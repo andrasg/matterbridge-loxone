@@ -130,15 +130,40 @@ class WindowShade extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
+    const latestPositionValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
+    const latestTargetPositionValueEvent = this.getLatestValueEvent(this.structureSection.states.targetPosition);
+    const latestUpValueEvent = this.getLatestValueEvent(this.structureSection.states.up);
+    const latestDownValueEvent = this.getLatestValueEvent(this.structureSection.states.down);
 
-    if (!latestValueEvent) {
+    if (!latestPositionValueEvent || !latestTargetPositionValueEvent || !latestUpValueEvent || !latestDownValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
       return;
     }
-    this.currentPosition = latestValueEvent.value * 10000;
+    this.currentPosition = latestPositionValueEvent.value * 10000;
+    this.targetPosition = latestPositionValueEvent.value * 10000;
+    if (latestUpValueEvent.value === 0 && latestDownValueEvent.value === 0) {
+      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
+    } else if (latestUpValueEvent.value === 1) {
+      this.operationalStatus = WindowCovering.MovementStatus.Opening;
+    } else if (latestDownValueEvent.value === 1) {
+      this.operationalStatus = WindowCovering.MovementStatus.Closing;
+    } else {
+      this.Endpoint.log.warn(`Invalid operational status for ${this.longname}`);
+      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
+    }
 
     await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(
+      WindowCovering.Cluster.id,
+      'operationalStatus',
+      {
+        global: this.operationalStatus,
+        lift: this.operationalStatus,
+        tilt: this.operationalStatus,
+      },
+      this.Endpoint.log,
+    );
   }
 }
 
