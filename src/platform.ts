@@ -83,7 +83,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
     this.isConfigValid = true;
 
-    this.loxoneClient = new LoxoneClient(`${this.loxoneIP}:${this.loxonePort}`, this.loxoneUsername, this.loxonePassword);
+    this.loxoneClient = new LoxoneClient(`${this.loxoneIP}:${this.loxonePort}`, this.loxoneUsername, this.loxonePassword, { messageLogEnabled: false });
 
     if (this.debug) this.loxoneClient.setLogLevel(LogLevel.DEBUG);
 
