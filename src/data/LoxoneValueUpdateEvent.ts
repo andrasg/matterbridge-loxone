@@ -6,7 +6,7 @@ class LoxoneValueUpdateEvent extends LoxoneUpdateEvent {
 
   constructor(uuid: string, evt: number) {
     super(uuid);
-    this.value = evt;
+    this.value = Math.round(evt * 100) / 100; // cap to two fractional digits
     this.type = 'value';
   }
 
