@@ -292,6 +292,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
             device.WithReplacableBattery(batteryUUID);
           }
         }
+      } else {
+        device.WithWiredPower();
       }
 
       // add all watched status UUIDs to the statusDevices map
@@ -305,6 +307,9 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.statusDevices.set(statusUUID, [device]);
         }
       }
+
+      // add potentially missing types
+      device.Endpoint.addRequiredClusterServers();
 
       this.allDevices.push(device);
 
