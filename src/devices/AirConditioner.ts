@@ -1,34 +1,37 @@
 import { airConditioner, bridgedNode, powerSource } from 'matterbridge';
 import { FanControl, OnOff, TemperatureMeasurement, Thermostat } from 'matterbridge/matter/clusters';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneDevice } from './LoxoneDevice.js';
 import * as Converters from '../utils/Converters.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class AirConditioner extends LoxoneDevice {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(structureSection: any, platform: LoxonePlatform) {
+  override states: Record<'status' | 'mode' | 'fan' | 'temperature' | 'targetTemperature' | 'silentMode', string>;
+
+  constructor(control: Control, platform: LoxonePlatform) {
     super(
-      structureSection,
+      control,
       platform,
       [airConditioner, bridgedNode, powerSource],
       [
-        structureSection.states.status,
-        structureSection.states.mode,
-        structureSection.states.fan,
-        structureSection.states.temperature,
-        structureSection.states.targetTemperature,
-        structureSection.states.silentMode,
+        control.structureSection.states.status,
+        control.structureSection.states.mode,
+        control.structureSection.states.fan,
+        control.structureSection.states.temperature,
+        control.structureSection.states.targetTemperature,
+        control.structureSection.states.silentMode,
       ],
       'airconditioner',
-      `${AirConditioner.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
+      `${AirConditioner.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
+    this.states = control.structureSection.states;
 
-    const latestStateValueEvent = this.getLatestValueEvent(structureSection.states.status);
+    const latestStateValueEvent = this.getLatestValueEvent(control.structureSection.states.status);
     const state = Converters.onOffValueConverter(latestStateValueEvent);
-    const latestTargetTemperatureValueEvent = this.getLatestValueEvent(structureSection.states.targetTemperature);
-    const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(structureSection.states.temperature);
+    const latestTargetTemperatureValueEvent = this.getLatestValueEvent(control.structureSection.states.targetTemperature);
+    const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(control.structureSection.states.temperature);
     const currentTemperature = Converters.temperatureValueConverter(latestCurrentTemperatureValueEvent);
 
     this.Endpoint.createDefaultGroupsClusterServer()
@@ -63,8 +66,8 @@ class AirConditioner extends LoxoneDevice {
     });
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+    if (!(event instanceof LoxoneValueEvent)) return;
 
     await this.updateAttributesFromLoxoneEvent(event);
   }
@@ -80,35 +83,35 @@ class AirConditioner extends LoxoneDevice {
     }
   }
 
-  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
-    switch (event.uuid) {
-      case this.structureSection.states.status: {
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {
+    switch (event.uuid.stringValue) {
+      case this.states.status: {
         const state = Converters.onOffValueConverter(event);
         await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', state, this.Endpoint.log);
         break;
       }
-      case this.structureSection.states.targetTemperature: {
+      case this.states.targetTemperature: {
         const targetTemperature = Converters.temperatureValueConverter(event);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', targetTemperature, this.Endpoint.log);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint', targetTemperature, this.Endpoint.log);
         break;
       }
-      case this.structureSection.states.temperature: {
+      case this.states.temperature: {
         const temperature = Converters.temperatureValueConverter(event);
         await this.Endpoint.updateAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', temperature, this.Endpoint.log);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'localTemperature', temperature, this.Endpoint.log);
         break;
       }
-      case this.structureSection.states.mode: {
+      case this.states.mode: {
         const mode = Converters.systemModeValueConverter(event);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'systemMode', mode, this.Endpoint.log);
         break;
       }
-      case this.structureSection.states.fan:
+      case this.states.fan:
         await this.Endpoint.updateAttribute(FanControl.Cluster.id, 'fanMode', FanControl.FanMode.Auto, this.Endpoint.log);
         await this.Endpoint.updateAttribute(FanControl.Cluster.id, 'percentSetting', null, this.Endpoint.log);
         break;
-      case this.structureSection.states.silentMode:
+      case this.states.silentMode:
       default:
     }
   }

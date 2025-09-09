@@ -1,22 +1,22 @@
-import { LoxoneValueUpdateEvent } from './LoxoneValueUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 
 class LoxoneLevelInfo {
   loxoneLevel = 0;
   matterLevel = 1;
   onOff = false;
 
-  constructor(event: LoxoneValueUpdateEvent | number | undefined) {
+  constructor(event: LoxoneValueEvent | number | undefined) {
     this.calculateLevel(event);
   }
 
-  static fromLoxoneEvent(event: LoxoneValueUpdateEvent | undefined) {
+  static fromLoxoneEvent(event: LoxoneValueEvent | undefined) {
     return new LoxoneLevelInfo(event);
   }
 
-  private calculateLevel(event: LoxoneValueUpdateEvent | number | undefined) {
+  private calculateLevel(event: LoxoneValueEvent | number | undefined) {
     if (event === undefined) return;
 
-    if (event instanceof LoxoneValueUpdateEvent) {
+    if (event instanceof LoxoneValueEvent) {
       this.loxoneLevel = event.value;
     } else if (typeof event === 'number') {
       this.loxoneLevel = event;

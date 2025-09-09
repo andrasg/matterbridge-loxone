@@ -1,19 +1,19 @@
 import { PowerSource } from 'matterbridge/matter/clusters';
-import { LoxoneValueUpdateEvent } from './LoxoneValueUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 
 class BatteryLevelInfo {
   batteryRemaining = 200;
   batteryStatus: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok;
 
-  constructor(event: LoxoneValueUpdateEvent | undefined) {
+  constructor(event: LoxoneValueEvent | undefined) {
     this.calculateLevel(event);
   }
 
-  static fromEvent(event: LoxoneValueUpdateEvent | undefined) {
+  static fromEvent(event: LoxoneValueEvent | undefined) {
     return new BatteryLevelInfo(event);
   }
 
-  private calculateLevel(event: LoxoneValueUpdateEvent | undefined) {
+  private calculateLevel(event: LoxoneValueEvent | undefined) {
     if (event === undefined) return;
 
     this.batteryRemaining = Math.round(event.value * 2);

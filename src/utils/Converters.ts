@@ -1,15 +1,15 @@
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import { Thermostat } from 'matterbridge/matter/clusters';
 
-export function onOffValueConverter(event: LoxoneValueUpdateEvent | undefined): boolean {
+export function onOffValueConverter(event: LoxoneValueEvent | undefined): boolean {
   return event ? (event.value === 1 ? true : false) : false;
 }
 
-export function temperatureValueConverter(event: LoxoneValueUpdateEvent | undefined): number {
+export function temperatureValueConverter(event: LoxoneValueEvent | undefined): number {
   return event ? event.value * 100 : 0;
 }
 
-export function systemModeValueConverter(event: LoxoneValueUpdateEvent | undefined): Thermostat.SystemMode {
+export function systemModeValueConverter(event: LoxoneValueEvent | undefined): Thermostat.SystemMode {
   switch (event?.value) {
     case 1:
       return Thermostat.SystemMode.Auto;

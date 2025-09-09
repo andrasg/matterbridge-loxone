@@ -1,14 +1,14 @@
 import { bridgedNode, powerSource, DeviceTypeDefinition } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 abstract class OnOffDevice extends LoxoneDevice {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(structureSection: any, platform: LoxonePlatform, className: string, shortTypeName: string, statusUUID: string, onOffDeviceType: DeviceTypeDefinition) {
-    super(structureSection, platform, [onOffDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${structureSection.uuidAction.replace(/-/g, '_')}`);
+  constructor(control: Control, platform: LoxonePlatform, className: string, shortTypeName: string, statusUUID: string, onOffDeviceType: DeviceTypeDefinition) {
+    super(control, platform, [onOffDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${control.structureSection.uuidAction.replace(/-/g, '_')}`);
 
     // at least one status UUID is required
     if (!statusUUID) {
@@ -24,8 +24,8 @@ abstract class OnOffDevice extends LoxoneDevice {
     this.addLoxoneCommandHandler('off');
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+    if (!(event instanceof LoxoneValueEvent)) return;
 
     await this.updateAttributesFromLoxoneEvent(event);
   }
@@ -40,7 +40,7 @@ abstract class OnOffDevice extends LoxoneDevice {
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 
-  private async updateAttributesFromLoxoneEvent(event: LoxoneValueUpdateEvent) {
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {
     await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
   }
 }

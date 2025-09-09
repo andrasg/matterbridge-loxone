@@ -1,28 +1,31 @@
 import { bridgedNode, powerSource, coverDevice } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class WindowShade extends LoxoneDevice {
   private operationalStatus: WindowCovering.MovementStatus = WindowCovering.MovementStatus.Stopped;
   private currentPosition = 0;
   private targetPosition = 0;
   private updatePending = false;
+  override states: Record<'up' | 'down' | 'position' | 'targetPosition', string>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(structureSection: any, platform: LoxonePlatform) {
+  constructor(control: Control, platform: LoxonePlatform) {
     super(
-      structureSection,
+      control,
       platform,
       [coverDevice, bridgedNode, powerSource],
-      [structureSection.states.position, structureSection.states.targetPosition, structureSection.states.up, structureSection.states.down],
+      [control.structureSection.states.position, control.structureSection.states.targetPosition, control.structureSection.states.up, control.structureSection.states.down],
       'window covering',
-      `${WindowShade.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
+      `${WindowShade.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
 
-    const latestValueEvent = this.getLatestValueEvent(structureSection.states.position);
+    this.states = control.structureSection.states;
+
+    const latestValueEvent = this.getLatestValueEvent(this.states.position);
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
     this.Endpoint.createDefaultWindowCoveringClusterServer(this.currentPosition);
@@ -50,20 +53,20 @@ class WindowShade extends LoxoneDevice {
     });
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+    if (!(event instanceof LoxoneValueEvent)) return;
 
-    switch (event.uuid) {
-      case this.structureSection.states.up:
+    switch (event.uuid.stringValue) {
+      case this.states.up:
         this.handleUpwardMovement(event);
         break;
-      case this.structureSection.states.down:
+      case this.states.down:
         this.handleDownwardMovement(event);
         break;
-      case this.structureSection.states.position:
+      case this.states.position:
         await this.handlePositionUpdate(event);
         break;
-      case this.structureSection.states.targetPosition:
+      case this.states.targetPosition:
         this.handleTargetPositionUpdate(event);
         break;
       default:
@@ -71,18 +74,18 @@ class WindowShade extends LoxoneDevice {
     }
   }
 
-  private handleTargetPositionUpdate(event: LoxoneValueUpdateEvent) {
+  private handleTargetPositionUpdate(event: LoxoneValueEvent) {
     this.targetPosition = event.value * 10000;
     this.Endpoint.log.info(`Target position: ${this.targetPosition}`);
   }
 
-  private async handlePositionUpdate(event: LoxoneValueUpdateEvent) {
+  private async handlePositionUpdate(event: LoxoneValueEvent) {
     this.currentPosition = event.value * 10000;
     this.Endpoint.log.info(`Current position: ${this.currentPosition}`);
     await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
   }
 
-  private handleDownwardMovement(event: LoxoneValueUpdateEvent) {
+  private handleDownwardMovement(event: LoxoneValueEvent) {
     if (event.value === 1) {
       this.Endpoint.log.info(`Moving up`);
       this.operationalStatus = WindowCovering.MovementStatus.Closing;
@@ -94,7 +97,7 @@ class WindowShade extends LoxoneDevice {
     }
   }
 
-  private async handleUpwardMovement(event: LoxoneValueUpdateEvent) {
+  private async handleUpwardMovement(event: LoxoneValueEvent) {
     if (event.value === 1) {
       this.Endpoint.log.info(`Moving up`);
       this.operationalStatus = WindowCovering.MovementStatus.Opening;
@@ -130,10 +133,10 @@ class WindowShade extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestPositionValueEvent = this.getLatestValueEvent(this.structureSection.states.position);
-    const latestTargetPositionValueEvent = this.getLatestValueEvent(this.structureSection.states.targetPosition);
-    const latestUpValueEvent = this.getLatestValueEvent(this.structureSection.states.up);
-    const latestDownValueEvent = this.getLatestValueEvent(this.structureSection.states.down);
+    const latestPositionValueEvent = this.getLatestValueEvent(this.control.structureSection.states.position);
+    const latestTargetPositionValueEvent = this.getLatestValueEvent(this.control.structureSection.states.targetPosition);
+    const latestUpValueEvent = this.getLatestValueEvent(this.control.structureSection.states.up);
+    const latestDownValueEvent = this.getLatestValueEvent(this.control.structureSection.states.down);
 
     if (!latestPositionValueEvent || !latestTargetPositionValueEvent || !latestUpValueEvent || !latestDownValueEvent) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);

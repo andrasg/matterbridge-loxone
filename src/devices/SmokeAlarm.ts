@@ -1,27 +1,29 @@
 import { bridgedNode, powerSource, smokeCoAlarm } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
 import { SmokeCoAlarm } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class SmokeAlarm extends LoxoneDevice {
   private cause = 0;
   private level = 0;
+  override states: Record<'level' | 'alarmCause', string>;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(structureSection: any, platform: LoxonePlatform) {
+  constructor(control: Control, platform: LoxonePlatform) {
     super(
-      structureSection,
+      control,
       platform,
       [smokeCoAlarm, bridgedNode, powerSource],
-      [structureSection.states.alarmCause, structureSection.states.level],
+      [control.structureSection.states.alarmCause, control.structureSection.states.level],
       'smoke alarm',
-      `${SmokeAlarm.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
+      `${SmokeAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
+    this.states = control.structureSection.states;
 
-    const latestCause = this.getLatestValueEvent(structureSection.states.level);
-    const latestLevel = this.getLatestValueEvent(structureSection.states.alarmCause);
+    const latestCause = this.getLatestValueEvent(this.states.level);
+    const latestLevel = this.getLatestValueEvent(this.states.alarmCause);
 
     this.cause = latestCause ? latestCause.value : 0;
     this.level = latestLevel ? latestLevel.value : 0;
@@ -37,12 +39,12 @@ class SmokeAlarm extends LoxoneDevice {
     return alarmState;
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+    if (!(event instanceof LoxoneValueEvent)) return;
 
-    if (event.uuid === this.structureSection.states.alarmCause) {
+    if (event.uuid.stringValue === this.control.structureSection.states.alarmCause) {
       this.cause = event.value;
-    } else if (event.uuid === this.structureSection.states.level) {
+    } else if (event.uuid.stringValue === this.control.structureSection.states.level) {
       this.level = event.value;
     }
 
@@ -50,8 +52,8 @@ class SmokeAlarm extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestCause = this.getLatestValueEvent(this.structureSection.states.level);
-    const latestLevel = this.getLatestValueEvent(this.structureSection.states.alarmCause);
+    const latestCause = this.getLatestValueEvent(this.control.structureSection.states.level);
+    const latestLevel = this.getLatestValueEvent(this.control.structureSection.states.alarmCause);
 
     if (!latestCause || !latestLevel) {
       this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);

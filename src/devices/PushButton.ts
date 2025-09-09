@@ -1,26 +1,29 @@
 import { bridgedNode, powerSource, genericSwitch } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { LoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneUpdateEvent } from '../data/LoxoneUpdateEvent.js';
-import { LoxoneValueUpdateEvent } from '../data/LoxoneValueUpdateEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class PushButton extends LoxoneDevice {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(structureSection: any, platform: LoxonePlatform) {
+  override states: Record<'active', string>;
+
+  constructor(control: Control, platform: LoxonePlatform) {
     super(
-      structureSection,
+      control,
       platform,
       [genericSwitch, bridgedNode, powerSource],
-      [structureSection.states.active],
+      [control.structureSection.states.active],
       'button',
-      `${genericSwitch.name}_${structureSection.uuidAction.replace(/-/g, '_')}`,
+      `${genericSwitch.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
+    this.states = control.structureSection.states;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultSwitchClusterServer();
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneUpdateEvent) {
-    if (!(event instanceof LoxoneValueUpdateEvent)) return;
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+    if (!(event instanceof LoxoneValueEvent)) return;
 
     if (event.value === 1) {
       await this.Endpoint.triggerSwitchEvent('Single', this.Endpoint.log);
