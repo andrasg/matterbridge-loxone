@@ -5,17 +5,20 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
 
-abstract class OnOffDevice extends LoxoneDevice {
-  constructor(control: Control, platform: LoxonePlatform, className: string, shortTypeName: string, statusUUID: string, onOffDeviceType: DeviceTypeDefinition) {
-    super(control, platform, [onOffDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${control.structureSection.uuidAction.replace(/-/g, '_')}`);
+abstract class OnOffDevice extends LoxoneDevice<ActiveOnlyStateNamesType> {
+  constructor(control: Control, platform: LoxonePlatform, className: string, shortTypeName: string, onOffDeviceType: DeviceTypeDefinition) {
+    super(
+      control,
+      platform,
+      [onOffDeviceType, bridgedNode, powerSource],
+      ActiveOnlyStateNameKeys,
+      shortTypeName,
+      `${className}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
+    );
 
-    // at least one status UUID is required
-    if (!statusUUID) {
-      throw new Error(`No status UUID provided for ${this.longname}`);
-    }
-
-    const latestValueEvent = this.getLatestValueEvent(statusUUID);
+    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
@@ -31,12 +34,7 @@ abstract class OnOffDevice extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestValueEvent = this.getLatestValueEvent(this.StatusUUIDs[0]);
-    if (!latestValueEvent) {
-      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
-      return;
-    }
-
+    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 

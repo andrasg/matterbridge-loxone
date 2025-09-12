@@ -5,7 +5,7 @@ import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class OnOffSwitch extends OnOffDevice {
   constructor(control: Control, platform: LoxonePlatform) {
-    super(control, platform, OnOffSwitch.name, 'switch', control.structureSection.states.active, onOffSwitch);
+    super(control, platform, OnOffSwitch.name, 'switch', onOffSwitch);
   }
 }
 

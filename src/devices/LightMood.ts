@@ -7,24 +7,29 @@ import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js'
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
-class LightMood extends LoxoneDevice {
+const StateNames = {
+  activeMoods: 'activeMoods',
+  moodList: 'moodList',
+} as const;
+type StateNameType = (typeof StateNames)[keyof typeof StateNames];
+const StateNameKeys = Object.values(StateNames) as StateNameType[];
+
+class LightMood extends LoxoneDevice<StateNameType> {
   moodId: number;
-  override states: Record<'activeMoods', string>;
 
   constructor(control: Control, platform: LoxonePlatform, moodId: number, moodName: string) {
     super(
       control,
       platform,
       [onOffLight, bridgedNode, powerSource],
-      [control.structureSection.states.activeMoods, control.structureSection.states.moodList],
+      StateNameKeys,
       'light mood',
       `${LightMood.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${moodId}`,
       moodName,
     );
-    this.states = control.structureSection.states;
 
     this.moodId = moodId;
-    const latestActiveMoodsEvent = this.getLatestTextEvent(this.states.activeMoods);
+    const latestActiveMoodsEvent = this.getLatestTextEvent(StateNames.activeMoods);
     const initialValue = latestActiveMoodsEvent ? this.calculateState(latestActiveMoodsEvent) : false;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
@@ -39,6 +44,8 @@ class LightMood extends LoxoneDevice {
 
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
     if (!(event instanceof LoxoneTextEvent)) return;
+
+    if (event.state?.name === StateNames.moodList) return;
 
     this.updateAttributesFromLoxoneEvent(event);
   }
@@ -67,13 +74,7 @@ class LightMood extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestActiveMoodsEvent = this.getLatestTextEvent(this.states.activeMoods);
-
-    if (!latestActiveMoodsEvent) {
-      this.Endpoint.log.warn(`No initial text event found for ${this.longname}`);
-      return;
-    }
-
+    const latestActiveMoodsEvent = this.getLatestTextEvent(StateNames.activeMoods);
     await this.updateAttributesFromLoxoneEvent(latestActiveMoodsEvent);
   }
 

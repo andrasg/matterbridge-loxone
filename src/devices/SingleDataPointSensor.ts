@@ -6,29 +6,38 @@ import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.j
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
-abstract class SingleDataPointSensor extends LoxoneDevice {
-  abstract override states: Record<string, string>;
+export const ValueOnlyStateNames = {
+  value: 'value',
+} as const;
+export const ValueOnlyStateNameKeys = Object.values(ValueOnlyStateNames) as (typeof ValueOnlyStateNames)[keyof typeof ValueOnlyStateNames][];
+export type ValueOnlyStateNamesType = (typeof ValueOnlyStateNames)[keyof typeof ValueOnlyStateNames];
+
+export const ActiveOnlyStateNames = {
+  active: 'active',
+} as const;
+export const ActiveOnlyStateNameKeys = Object.values(ActiveOnlyStateNames) as (typeof ActiveOnlyStateNames)[keyof typeof ActiveOnlyStateNames][];
+export type ActiveOnlyStateNamesType = (typeof ActiveOnlyStateNames)[keyof typeof ActiveOnlyStateNames];
+
+abstract class SingleDataPointSensor<T extends string = string> extends LoxoneDevice<T> {
   clusterId: ClusterId;
   attributeName: string;
+  singleStateName: T;
+
   constructor(
     control: Control,
     platform: LoxonePlatform,
     className: string,
     shortTypeName: string,
-    statusUUID: string,
+    stateName: T,
     sensorDeviceType: DeviceTypeDefinition,
     clusterId: ClusterId,
     attributeName: string,
   ) {
-    super(control, platform, [sensorDeviceType, bridgedNode, powerSource], [statusUUID], shortTypeName, `${className}_${control.structureSection.uuidAction.replace(/-/g, '_')}`);
+    super(control, platform, [sensorDeviceType, bridgedNode, powerSource], [stateName], shortTypeName, `${className}_${control.structureSection.uuidAction.replace(/-/g, '_')}`);
 
     this.clusterId = clusterId;
     this.attributeName = attributeName;
-
-    // at least one status UUID is required
-    if (!statusUUID) {
-      throw new Error(`No status UUID provided for ${this.longname}`);
-    }
+    this.singleStateName = stateName;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,13 +50,8 @@ abstract class SingleDataPointSensor extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestValueEvent = this.getLatestValueEvent(this.control.structureSection.states.active);
-    if (!latestValueEvent) {
-      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
-      return;
-    }
-
-    await this.updateAttributesFromLoxoneEvent(latestValueEvent);
+    const latestEvent = this.getLatestValueEvent(this.singleStateName);
+    await this.updateAttributesFromLoxoneEvent(latestEvent);
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {

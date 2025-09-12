@@ -265,18 +265,18 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
         device.WithWiredPower();
       }
 
-      for (const statusUUID of device.StatusUUIDs) {
+      for (const deviceState of device.statesByName.values()) {
         // filter loxoneClient event emitting by only relevant UUIDs
-        this.loxoneClient.addUuidToWatchList(statusUUID);
+        this.loxoneClient.addUuidToWatchList(deviceState.uuid.stringValue);
 
         // add all watched status UUIDs to the statusDevices map
-        if (this.statusDevices.has(statusUUID)) {
-          const devices = this.statusDevices.get(statusUUID);
+        if (this.statusDevices.has(deviceState.uuid.stringValue)) {
+          const devices = this.statusDevices.get(deviceState.uuid.stringValue);
           if (devices !== undefined) {
             devices.push(device);
           }
         } else {
-          this.statusDevices.set(statusUUID, [device]);
+          this.statusDevices.set(deviceState.uuid.stringValue, [device]);
         }
       }
 

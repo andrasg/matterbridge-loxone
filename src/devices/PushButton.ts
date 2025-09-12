@@ -4,20 +4,18 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { ActiveOnlyStateNameKeys, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
 
-class PushButton extends LoxoneDevice {
-  override states: Record<'active', string>;
-
+class PushButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
   constructor(control: Control, platform: LoxonePlatform) {
     super(
       control,
       platform,
       [genericSwitch, bridgedNode, powerSource],
-      [control.structureSection.states.active],
+      ActiveOnlyStateNameKeys,
       'button',
       `${genericSwitch.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
-    this.states = control.structureSection.states;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultSwitchClusterServer();
   }

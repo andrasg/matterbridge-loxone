@@ -6,24 +6,28 @@ import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.j
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
-class RadioButton extends LoxoneDevice {
+const StateNames = {
+  activeOutput: 'activeOutput',
+} as const;
+type StateNameType = (typeof StateNames)[keyof typeof StateNames];
+const StateNameKeys = Object.values(StateNames) as StateNameType[];
+
+class RadioButton extends LoxoneDevice<StateNameType> {
   outputId: number;
-  override states: Record<'activeOutput', string>;
 
   constructor(control: Control, platform: LoxonePlatform, outputId: number, outputName: string) {
     super(
       control,
       platform,
       [onOffSwitch, bridgedNode, powerSource],
-      [control.structureSection.states.activeOutput],
+      StateNameKeys,
       'radio button',
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${outputId}`,
       outputName,
     );
-    this.states = control.structureSection.states;
 
     this.outputId = outputId;
-    const latestActiveOutputEvent = this.getLatestValueEvent(this.states.activeOutput);
+    const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
     const initialValue = latestActiveOutputEvent ? latestActiveOutputEvent.value === this.outputId : false;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
@@ -43,13 +47,7 @@ class RadioButton extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestActiveOutputEvent = this.getLatestValueEvent(this.states.activeOutput);
-
-    if (!latestActiveOutputEvent) {
-      this.Endpoint.log.warn(`No initial text event found for ${this.longname}`);
-      return;
-    }
-
+    const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
     await this.updateAttributesFromLoxoneEvent(latestActiveOutputEvent);
   }
 

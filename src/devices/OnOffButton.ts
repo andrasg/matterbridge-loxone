@@ -5,22 +5,20 @@ import { LoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
 
-class OnOffButton extends LoxoneDevice {
-  override states: Record<'active', string>;
-
+class OnOffButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
   constructor(control: Control, platform: LoxonePlatform) {
     super(
       control,
       platform,
       [onOffSwitch, bridgedNode, powerSource],
-      [control.structureSection.states.active],
+      ActiveOnlyStateNameKeys,
       'button',
       `${OnOffButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
-    this.states = control.structureSection.states;
 
-    const latestValueEvent = this.getLatestValueEvent(this.states.active);
+    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
@@ -41,12 +39,7 @@ class OnOffButton extends LoxoneDevice {
   }
 
   override async populateInitialState() {
-    const latestValueEvent = this.getLatestValueEvent(this.states.active);
-    if (!latestValueEvent) {
-      this.Endpoint.log.warn(`No initial value event found for ${this.longname}`);
-      return;
-    }
-
+    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 
