@@ -60,8 +60,8 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState() {
-    const latestCause = this.getLatestValueEvent(this.control.structureSection.states.level);
-    const latestLevel = this.getLatestValueEvent(this.control.structureSection.states.alarmCause);
+    const latestCause = this.getLatestValueEvent(StateNames.alarmCause);
+    const latestLevel = this.getLatestValueEvent(StateNames.level);
 
     this.cause = latestCause.value;
     this.level = latestLevel.value;
