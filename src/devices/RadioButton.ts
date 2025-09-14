@@ -27,11 +27,11 @@ class RadioButton extends LoxoneDevice<StateNameType> {
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${additionalConfig.outputId}`,
     );
 
-    if (!additionalConfig || !additionalConfig.outputId || isNaN(parseInt(additionalConfig.outputId))) {
+    if (!additionalConfig || !additionalConfig.outputId || (isNaN(parseInt(additionalConfig.outputId)) && additionalConfig.outputId !== 'allOff')) {
       throw new Error(`LightMood device requires a valid outputId as additionalConfig.`);
     }
 
-    this.outputId = parseInt(additionalConfig.outputId);
+    this.outputId = additionalConfig.outputId === 'allOff' ? 0 : parseInt(additionalConfig.outputId);
     this.outputName = this.getOutputName();
 
     this.setNameSuffix(this.outputName);
@@ -42,7 +42,7 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
-      return `${this.outputId}`;
+      return this.outputId === 0 ? 'reset' : `${this.outputId}`;
     });
     this.addLoxoneCommandHandler('off', () => {
       return `reset`;
