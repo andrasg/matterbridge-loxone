@@ -1,7 +1,7 @@
 import { bridgedNode, powerSource, onOffLight, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterDevice } from './LoxoneDevice.js';
 import { getLatestTextEvent } from '../utils/Utils.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
@@ -90,6 +90,13 @@ class LightMood extends LoxoneDevice<StateNameType> {
     const currentState = this.calculateState(event);
     await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', currentState, this.Endpoint.log);
   }
+
+  static override typeNames(): string[] {
+    return ['mood'];
+  }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+RegisterDevice(LightMood as unknown as any);
 
 export { LightMood };

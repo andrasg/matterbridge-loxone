@@ -18,7 +18,6 @@ const StateNames = {
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
-@RegisterDevice
 class AirConditioner extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
 
@@ -121,5 +120,9 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
     }
   }
 }
+
+// register explicitly instead of using the decorator so we avoid decorator syntax
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+RegisterDevice(AirConditioner as unknown as any);
 
 export { AirConditioner };
