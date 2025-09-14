@@ -27,11 +27,11 @@ class RadioButton extends LoxoneDevice<StateNameType> {
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${additionalConfig.outputId}`,
     );
 
-    if (!additionalConfig || !additionalConfig.outputId || (isNaN(parseInt(additionalConfig.outputId)) && additionalConfig.outputId !== 'allOff')) {
+    if (!additionalConfig || !additionalConfig.outputId || isNaN(parseInt(additionalConfig.outputId))) {
       throw new Error(`LightMood device requires a valid outputId as additionalConfig.`);
     }
 
-    this.outputId = additionalConfig.outputId === 'allOff' ? 0 : parseInt(additionalConfig.outputId);
+    this.outputId = parseInt(additionalConfig.outputId);
     this.outputName = this.getOutputName();
 
     this.setNameSuffix(this.outputName);
