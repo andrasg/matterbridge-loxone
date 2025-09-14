@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, coverDevice } from 'matterbridge';
+import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -16,6 +16,8 @@ type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
 class WindowShade extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
+
   private operationalStatus: WindowCovering.MovementStatus = WindowCovering.MovementStatus.Stopped;
   private currentPosition = 0;
   private targetPosition = 0;
@@ -34,7 +36,7 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     const latestValueEvent = this.getLatestValueEvent(StateNames.position);
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
-    this.Endpoint.createDefaultWindowCoveringClusterServer(this.currentPosition);
+    this.Endpoint = this.createDefaultEndpoint().createDefaultWindowCoveringClusterServer(this.currentPosition);
 
     this.addLoxoneCommandHandler('stopMotion', () => {
       return 'stop';

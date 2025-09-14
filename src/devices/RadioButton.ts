@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, onOffSwitch } from 'matterbridge';
+import { bridgedNode, powerSource, onOffSwitch, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -13,6 +13,7 @@ type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
 class RadioButton extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
   outputId: number;
 
   constructor(control: Control, platform: LoxonePlatform, outputId: number, outputName: string) {
@@ -23,14 +24,15 @@ class RadioButton extends LoxoneDevice<StateNameType> {
       StateNameKeys,
       'radio button',
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${outputId}`,
-      outputName,
     );
+
+    this.setNameSuffix(outputName);
 
     this.outputId = outputId;
     const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
     const initialValue = latestActiveOutputEvent ? latestActiveOutputEvent.value === this.outputId : false;
 
-    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       return `${this.outputId}`;

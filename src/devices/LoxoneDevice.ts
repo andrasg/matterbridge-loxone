@@ -14,11 +14,26 @@ import { LoxoneEvent } from 'loxone-ts-api/dist/LoxoneEvents/LoxoneEvent.js';
 export const BASE_STATE_NAMES = ['battery'] as const;
 export type BaseStateNameType = (typeof BASE_STATE_NAMES)[number];
 
+// interface for allowing maintenance of device registry
+export interface ILoxoneDevice {
+  // allow additional constructor arguments for device subclasses that require extra params
+  new (control: Control, platform: LoxonePlatform, nameOverride?: string): LoxoneDevice;
+  typeNames(): string[];
+  nameExtractor(control: Control, platform: LoxonePlatform, additionalConfig: string): string | undefined;
+}
+
+// decorator function for allowing registration of a device type
+export function RegisterDevice<T extends ILoxoneDevice>(ctor: T): T {
+  LoxoneDevice.registerSubclass(ctor as unknown as typeof LoxoneDevice);
+  return ctor;
+}
+
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
  */
 abstract class LoxoneDevice<T extends string = string> {
-  public Endpoint: MatterbridgeEndpoint;
+  // Endpoint is created by the base class constructor so subclasses can safely use it
+  public abstract Endpoint: MatterbridgeEndpoint;
   public control: Control;
   public roomname: string;
   public longname: string;
@@ -29,6 +44,8 @@ abstract class LoxoneDevice<T extends string = string> {
   private batteryUUID: string | undefined;
   public statesByName: Map<T | BaseStateNameType, State> = new Map<T | BaseStateNameType, State>();
 
+  private static _deviceRegistry: (typeof LoxoneDevice)[] = [];
+
   constructor(
     control: Control,
     platform: LoxonePlatform,
@@ -36,7 +53,6 @@ abstract class LoxoneDevice<T extends string = string> {
     stateNames: readonly T[],
     typeName: string,
     uniqueStorageKey: string,
-    nameSuffix: string | undefined = undefined,
   ) {
     this.control = control;
 
@@ -50,16 +66,10 @@ abstract class LoxoneDevice<T extends string = string> {
 
     this.roomname = control.room.name;
     this.longname = `${this.roomname}/${this.control.name}`;
-    if (nameSuffix) {
-      this.longname += `/${nameSuffix}`;
-    }
     this.platform = platform;
     this.typeName = typeName;
     this.deviceTypeDefinitions = deviceTypeDefinitions;
     this.uniqueStorageKey = uniqueStorageKey;
-
-    // create the endpoint
-    this.Endpoint = this.createDefaultEndpoint();
   }
 
   /**
@@ -72,6 +82,16 @@ abstract class LoxoneDevice<T extends string = string> {
     if (this.platform.validateDevice(this.Endpoint.deviceName ?? '')) {
       await this.platform.registerDevice(this.Endpoint);
     }
+  }
+
+  public static registerSubclass(ctor: typeof LoxoneDevice): void {
+    if (!LoxoneDevice._deviceRegistry.includes(ctor)) {
+      LoxoneDevice._deviceRegistry.push(ctor);
+    }
+  }
+
+  public static getRegisteredSubclasses(): (typeof LoxoneDevice)[] {
+    return [...LoxoneDevice._deviceRegistry];
   }
 
   /**
@@ -211,6 +231,10 @@ abstract class LoxoneDevice<T extends string = string> {
     await this.handleLoxoneDeviceEvent(event);
   }
 
+  protected setNameSuffix(nameSuffix: string) {
+    this.longname += `/${nameSuffix}`;
+  }
+
   private async handleBatteryEvent(event: LoxoneEvent) {
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
 
@@ -244,6 +268,19 @@ abstract class LoxoneDevice<T extends string = string> {
    * Asks the device to set its attributes from its internal state. Used in the onConfigure event.
    */
   abstract populateInitialState(): Promise<void>;
+
+  /**
+   * Returns the list of short type names that the identify the device in the configuration.
+   * @returns {string[]} The list of type names.
+   */
+  static typeNames(): string[] {
+    return [];
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static nameExtractor(control: Control, platform: LoxonePlatform, additionalConfig: string): string | undefined {
+    return undefined;
+  }
 
   public async restoreState() {
     if (this.batteryUUID !== undefined) {

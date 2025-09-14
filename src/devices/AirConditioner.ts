@@ -1,7 +1,7 @@
-import { airConditioner, bridgedNode, powerSource } from 'matterbridge';
+import { airConditioner, bridgedNode, MatterbridgeEndpoint, powerSource } from 'matterbridge';
 import { FanControl, OnOff, TemperatureMeasurement, Thermostat } from 'matterbridge/matter/clusters';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterDevice } from './LoxoneDevice.js';
 import * as Converters from '../utils/Converters.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
@@ -18,7 +18,10 @@ const StateNames = {
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
+@RegisterDevice
 class AirConditioner extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
+
   constructor(control: Control, platform: LoxonePlatform) {
     super(
       control,
@@ -35,7 +38,8 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
     const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(StateNames.temperature);
     const currentTemperature = Converters.temperatureValueConverter(latestCurrentTemperatureValueEvent);
 
-    this.Endpoint.createDefaultGroupsClusterServer()
+    this.Endpoint = this.createDefaultEndpoint()
+      .createDefaultGroupsClusterServer()
       .createDeadFrontOnOffClusterServer(state)
       .createDefaultThermostatClusterServer(latestCurrentTemperatureValueEvent.value, latestTargetTemperatureValueEvent.value, latestTargetTemperatureValueEvent.value)
       .createDefaultThermostatUserInterfaceConfigurationClusterServer()
@@ -65,6 +69,10 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
       const loxoneCommands = newValue === 0 || newValue === null ? 'off' : ['on', `setFan/1`];
       return loxoneCommands;
     });
+  }
+
+  static override typeNames(): string[] {
+    return ['airconditioner', 'ac'];
   }
 
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {

@@ -60,8 +60,9 @@ The plugin supports the following types
 |pressure|pressure sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
 |waterleak|water leak sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
 |motion|occupancy sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|button|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|switches automatically back to off after 1 second
+|switch|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|
+|button|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|switches automatically back to off after 1 second|
+|pushbutton|genericSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|input device only, no Home app UI|
 |outlet|switch (outlet)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |light|switch (light)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|

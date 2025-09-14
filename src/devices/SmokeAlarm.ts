@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, smokeCoAlarm } from 'matterbridge';
+import { bridgedNode, MatterbridgeEndpoint, powerSource, smokeCoAlarm } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { SmokeCoAlarm } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -14,6 +14,7 @@ type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
 class SmokeAlarm extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
   private cause = 0;
   private level = 0;
 
@@ -35,7 +36,7 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
 
     const alarmState = this.calculateAlarmState();
 
-    this.Endpoint.createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
+    this.Endpoint = this.createDefaultEndpoint().createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
   }
 
   private calculateAlarmState(): SmokeCoAlarm.AlarmState {

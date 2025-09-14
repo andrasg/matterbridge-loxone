@@ -2,7 +2,7 @@ import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matte
 import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { TemperatureSensor } from './devices/TemperatureSensor.js';
-import { LoxoneDevice } from './devices/LoxoneDevice.js';
+import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
 import { HumiditySensor } from './devices/HumiditySensor.js';
 import { ContactSensor } from './devices/ContactSensor.js';
 import { WindowShade } from './devices/WindowShade.js';
@@ -34,6 +34,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   private debug = false;
   private statusDevices = new Map<string, LoxoneDevice[]>();
   private allDevices: LoxoneDevice[] = [];
+  private deviceCtorByType: Map<string, ILoxoneDevice> = new Map<string, ILoxoneDevice>();
   private isPluginConfigured = false;
   private isConfigValid = false;
   public initialUpdateEvents: (LoxoneValueEvent | LoxoneTextEvent)[] = [];
@@ -121,6 +122,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
+    await this.createDeviceRegistry();
     await this.createDevices();
 
     await this.ready;
@@ -141,6 +143,37 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     // empty the initial update events cache as it's no longer needed
     this.initialUpdateEvents = [];
     this.log.info(`Platform configured.`);
+  }
+
+  private async createDeviceRegistry() {
+    this.log.info('Reading LoxoneDevice classes...');
+    this.deviceCtorByType.clear();
+
+    const subclasses = LoxoneDevice.getRegisteredSubclasses();
+    for (const ctor of subclasses) {
+      try {
+        const names = ctor.typeNames();
+        if (!names || names.length === 0) {
+          this.log.warn(`Registered device class ${ctor.name} has no static typeNames()`);
+          continue;
+        }
+
+        for (const name of names) {
+          const key = name.toLowerCase();
+          if (this.deviceCtorByType.has(key)) {
+            this.log.warn(`Device type name '${name}' from ${ctor.name} conflicts with existing registration. Overwriting.`);
+          }
+          // ctor is typeof LoxoneDevice (possibly abstract). Cast to LoxoneDeviceInterface which
+          // models a concrete constructible signature allowing extra args. This is safe because
+          // registered subclasses are concrete implementations.
+          this.deviceCtorByType.set(key, ctor as unknown as ILoxoneDevice);
+          this.log.debug(`Registered device type '${name}' -> ${ctor.name}`);
+        }
+      } catch (err) {
+        this.log.error(`Error registering device constructor ${ctor.name}: ${err}`);
+      }
+    }
+    this.log.info(`Device registry created with ${this.deviceCtorByType.size} type entries.`);
   }
 
   private async createDevices() {
@@ -167,6 +200,21 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       this.log.debug(`Found Loxone control with UUID ${uuid} type ${control.type}, name ${control.name} in room ${control.room.name}`);
 
       let device: LoxoneDevice;
+
+      const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
+      if (!deviceCtor) {
+        this.log.error(`No registered LoxoneDevice for type '${type}'`);
+        continue;
+      }
+      const additionalParameters = uuidAndType.split(',').slice(2).toString();
+      const nameOverride = deviceCtor.nameExtractor(control, this, additionalParameters);
+
+      if (nameOverride) {
+        device = new deviceCtor(control, this, nameOverride);
+      } else {
+        device = new deviceCtor(control, this);
+      }
+
       try {
         switch (type.toLowerCase()) {
           case 'switch':

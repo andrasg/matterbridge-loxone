@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, dimmableLight } from 'matterbridge';
+import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -15,6 +15,8 @@ type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
 class DimmerLight extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
+
   constructor(control: Control, platform: LoxonePlatform) {
     super(
       control,
@@ -27,7 +29,10 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
     const latestValueEvent = this.getLatestValueEvent(StateNames.position);
     const value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
 
-    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(value.onOff).createDefaultLevelControlClusterServer(value.matterLevel);
+    this.Endpoint = this.createDefaultEndpoint()
+      .createDefaultGroupsClusterServer()
+      .createDefaultOnOffClusterServer(value.onOff)
+      .createDefaultLevelControlClusterServer(value.matterLevel);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');

@@ -1,4 +1,4 @@
-import { temperatureSensor } from 'matterbridge';
+import { MatterbridgeEndpoint, temperatureSensor } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { TemperatureMeasurement } from 'matterbridge/matter/clusters';
 import { SingleDataPointSensor, ValueOnlyStateNameKeys, ValueOnlyStateNames, ValueOnlyStateNamesType } from './SingleDataPointSensor.js';
@@ -6,12 +6,14 @@ import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.j
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 
 class TemperatureSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
+  public Endpoint: MatterbridgeEndpoint;
+
   constructor(control: Control, platform: LoxonePlatform) {
     super(control, platform, TemperatureSensor.name, 'temperature sensor', ValueOnlyStateNameKeys[0], temperatureSensor, TemperatureMeasurement.Cluster.id, 'measuredValue');
     const latestValueEvent = this.getLatestValueEvent(ValueOnlyStateNames.value);
     const initialValue = this.valueConverter(latestValueEvent);
 
-    this.Endpoint.createDefaultTemperatureMeasurementClusterServer(initialValue);
+    this.Endpoint = this.createDefaultEndpoint().createDefaultTemperatureMeasurementClusterServer(initialValue);
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): number {

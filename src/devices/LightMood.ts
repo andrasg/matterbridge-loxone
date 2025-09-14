@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, onOffLight } from 'matterbridge';
+import { bridgedNode, powerSource, onOffLight, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -15,24 +15,26 @@ type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
 
 class LightMood extends LoxoneDevice<StateNameType> {
+  public Endpoint: MatterbridgeEndpoint;
   moodId: number;
 
   constructor(control: Control, platform: LoxonePlatform, moodId: number, moodName: string) {
     super(
       control,
       platform,
-      [onOffLight, bridgedNode, powerSource],
-      StateNameKeys,
-      'light mood',
-      `${LightMood.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${moodId}`,
-      moodName,
+      /* deviceTypeDefinitions */ [onOffLight, bridgedNode, powerSource],
+      /* stateNames */ StateNameKeys,
+      /* typeName */ 'light mood',
+      /* uniqueStorageKey */ `${LightMood.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${moodId}`,
     );
 
     this.moodId = moodId;
     const latestActiveMoodsEvent = this.getLatestTextEvent(StateNames.activeMoods);
     const initialValue = latestActiveMoodsEvent ? this.calculateState(latestActiveMoodsEvent) : false;
 
-    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
+    this.setNameSuffix(moodName);
+
+    this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on', () => {
       return `addMood/${this.moodId}`;
@@ -52,6 +54,12 @@ class LightMood extends LoxoneDevice<StateNameType> {
 
   calculateState(event: LoxoneTextEvent): boolean {
     return JSON.parse(event.text).includes(this.moodId);
+  }
+
+  public static override nameExtractor(control: Control, platform: LoxonePlatform, additionalConfig: string): string {
+    const moodId = parseInt(additionalConfig);
+
+    return this.getMoodName(moodId, platform.initialUpdateEvents, control.structureSection.states.moodList);
   }
 
   public static getMoodName(moodId: number, updateEvents: (LoxoneValueEvent | LoxoneTextEvent)[], moodListUUID: string) {

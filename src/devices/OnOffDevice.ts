@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, DeviceTypeDefinition } from 'matterbridge';
+import { bridgedNode, powerSource, DeviceTypeDefinition, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { LoxoneDevice } from './LoxoneDevice.js';
@@ -8,6 +8,8 @@ import Control from 'loxone-ts-api/dist/Structure/Control.js';
 import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
 
 abstract class OnOffDevice extends LoxoneDevice<ActiveOnlyStateNamesType> {
+  public Endpoint: MatterbridgeEndpoint;
+
   constructor(control: Control, platform: LoxonePlatform, className: string, shortTypeName: string, onOffDeviceType: DeviceTypeDefinition) {
     super(
       control,
@@ -21,7 +23,7 @@ abstract class OnOffDevice extends LoxoneDevice<ActiveOnlyStateNamesType> {
     const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
-    this.Endpoint.createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');
