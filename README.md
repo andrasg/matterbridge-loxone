@@ -70,6 +70,7 @@ The plugin supports the following types
 |radio|switch|`Radio`|output number of the radio button||
 |smoke|smoke alarm|`SmokeAlarm`|none||
 |ac|airconditioner|`AcControl` device|none||
+|shade|window covering|Window shade or roof shade device|none||
 
 Additionally, all devices support specifying remaining battery %, by appending:
 `,battery_<batterystatusUUID>` to the end of the UUID and type string.

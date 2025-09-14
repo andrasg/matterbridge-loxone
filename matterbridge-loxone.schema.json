@@ -41,6 +41,11 @@
         "uniqueItems": true,
         "selectEntityFrom": "name"
       },
+      "dumpcontrols": {
+        "description": "Enable to dump all possible Loxone control UUIDs",
+        "type": "boolean",
+        "default": false
+      },
       "logevents": {
         "description": "Enable to dump all received Loxone events",
         "type": "boolean",
