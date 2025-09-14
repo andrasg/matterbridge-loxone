@@ -1,7 +1,7 @@
 import { bridgedNode, powerSource, onOffSwitch, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
@@ -48,6 +48,12 @@ class OnOffButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {
     await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === 1, this.Endpoint.log);
   }
+
+  static override typeNames(): string[] {
+    return ['button'];
+  }
 }
+
+RegisterLoxoneDevice(OnOffButton);
 
 export { OnOffButton };

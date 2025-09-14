@@ -1,28 +1,12 @@
 import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
 import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
-import { TemperatureSensor } from './devices/TemperatureSensor.js';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
-import { HumiditySensor } from './devices/HumiditySensor.js';
-import { ContactSensor } from './devices/ContactSensor.js';
-import { WindowShade } from './devices/WindowShade.js';
-import { MotionSensor } from './devices/MotionSensor.js';
-import { LightMood } from './devices/LightMood.js';
-import { SmokeAlarm } from './devices/SmokeAlarm.js';
-import { LightSensor } from './devices/LightSensor.js';
-import { WaterLeakSensor } from './devices/WaterLeakSensor.js';
-import { OnOffOutlet } from './devices/OnOffOutlet.js';
-import { RadioButton } from './devices/RadioButton.js';
-import { OnOffSwitch } from './devices/OnOffSwitch.js';
-import { OnOffLight } from './devices/OnOffLight.js';
-import { OnOffButton } from './devices/OnOffButton.js';
-import { PressureSensor } from './devices/PressureSensor.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
-import { AirConditioner } from './devices/AirConditioner.js';
-import { PushButton } from './devices/PushButton.js';
 import LoxoneClient from 'loxone-ts-api';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import './devices/index.js'; // ensure all devices are loaded
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public loxoneIP: string | undefined = undefined;
@@ -182,168 +166,88 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.log.info('Creating devices...');
 
     for (const uuidAndType of this.loxoneUUIDsAndTypes) {
-      const uuid = uuidAndType.split(',')[0];
-      const type = uuidAndType.split(',')[1];
-
-      if (this.loxoneClient.controls.get(uuid) === undefined) {
-        this.log.error(`Loxone UUID ${uuid} not found in structure file.`);
-        continue;
-      }
-
-      const control = this.loxoneClient.controls.get(uuid);
-
-      if (!control) {
-        this.log.error(`Loxone control with UUID ${uuid} not found.`);
-        continue;
-      }
-
-      this.log.debug(`Found Loxone control with UUID ${uuid} type ${control.type}, name ${control.name} in room ${control.room.name}`);
-
-      let device: LoxoneDevice;
-
-      const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
-      if (!deviceCtor) {
-        this.log.error(`No registered LoxoneDevice for type '${type}'`);
-        continue;
-      }
-      const additionalParameters = uuidAndType.split(',').slice(2).toString();
-      const nameOverride = deviceCtor.nameExtractor(control, this, additionalParameters);
-
-      if (nameOverride) {
-        device = new deviceCtor(control, this, nameOverride);
-      } else {
-        device = new deviceCtor(control, this);
-      }
-
       try {
-        switch (type.toLowerCase()) {
-          case 'switch':
-            this.log.info(`Creating switch device for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new OnOffSwitch(control, this);
-            break;
-          case 'button':
-            this.log.info(`Creating button device for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new OnOffButton(control, this);
-            break;
-          case 'pushbutton':
-            this.log.info(`Creating push button for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new PushButton(control, this);
-            break;
-          case 'outlet':
-            this.log.info(`Creating outlet device for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new OnOffOutlet(control, this);
-            break;
-          case 'light':
-            this.log.info(`Creating light for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new OnOffLight(control, this);
-            break;
-          case 'temperature':
-            this.log.info(`Creating temperature sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new TemperatureSensor(control, this);
-            break;
-          case 'humidity':
-            this.log.info(`Creating humidity sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new HumiditySensor(control, this);
-            break;
-          case 'contact':
-          case 'contactsensor':
-            this.log.info(`Creating contact sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new ContactSensor(control, this);
-            break;
-          case 'occupancy':
-          case 'presence':
-          case 'motion':
-            this.log.info(`Creating motion sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new MotionSensor(control, this);
-            break;
-          case 'shade':
-          case 'shading':
-            this.log.info(`Creating window covering for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new WindowShade(control, this);
-            break;
-          case 'mood': {
-            const moodId = parseInt(uuidAndType.split(',')[2]);
-            const moodName = LightMood.getMoodName(moodId, this.initialUpdateEvents, control.structureSection.states.moodList);
-            this.log.info(`Creating mood for Loxone control with UUID ${uuid}: ${moodName}`);
-            device = new LightMood(control, this, moodId, moodName);
-            break;
-          }
-          case 'smoke':
-          case 'smokesensor': {
-            this.log.info(`Creating smoke alarm for Loxone control with UUID ${uuid}: ${control.name}`);
-            const supportsSmoke = control.structureSection.details.availableAlarms & 0x01;
-            if (!supportsSmoke) continue;
-            device = new SmokeAlarm(control, this);
-            break;
-          }
-          case 'water':
-          case 'waterleak':
-            this.log.info(`Creating water leak for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new WaterLeakSensor(control, this);
-            break;
-          case 'lightsensor':
-            this.log.info(`Creating light sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new LightSensor(control, this);
-            break;
-          case 'pressure':
-            this.log.info(`Creating pressure sensor for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new PressureSensor(control, this);
-            break;
-          case 'radio': {
-            const outputId = parseInt(uuidAndType.split(',')[2]);
-            const outputName = control.structureSection.details.outputs[outputId.toString()];
-            this.log.info(`Creating radio button for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new RadioButton(control, this, outputId, outputName);
-            break;
-          }
-          case 'ac':
-            this.log.info(`Creating air conditioner for Loxone control with UUID ${uuid}: ${control.name}`);
-            device = new AirConditioner(control, this);
-            break;
-          default:
-            this.log.error(`Unknown type ${type} for Loxone control with UUID ${uuid}: ${control.name}`);
-            continue;
-        }
+        await this.createDevice(uuidAndType);
       } catch (error) {
-        this.log.error(`Error creating device for Loxone control with UUID ${uuid}: ${error}`);
+        this.log.error(`Error creating device for config '${uuidAndType}': ${error}`);
+      }
+    }
+  }
+
+  private async createDevice(uuidAndType: string) {
+    const configParts = uuidAndType.split(',');
+    if (configParts.length < 2) {
+      throw new Error(`Invalid uuidsandtypes entry: '${uuidAndType}', must be at least 'UUID,type'`);
+    }
+
+    const controlUuid = configParts[0];
+    const type = configParts[1];
+
+    // parse additional config key=value pairs
+    const additionalConfig: Record<string, string> = {};
+    for (let i = 2; i < configParts.length; i++) {
+      const config = configParts[i];
+      if (!config.includes('=')) {
+        this.log.warn(`Invalid config entry for ${controlUuid}: '${config}', must be in 'key=value' format`);
         continue;
       }
-      // add battery level if battery UUID definition is there
-      if (uuidAndType.split(',').some((e) => e.startsWith('battery'))) {
-        const batteryUUIDpart = uuidAndType.split(',').find((e) => e.startsWith('battery'));
-        if (batteryUUIDpart !== undefined) {
-          const batteryUUID = batteryUUIDpart.split('_')[1];
-          if (batteryUUID) {
-            device.WithReplacableBattery(batteryUUID);
-          }
+      const key = config.split('=')[0];
+      const value = config.split('=')[1];
+      additionalConfig[key] = value;
+    }
+
+    // find a control with the specified UUID
+    if (this.loxoneClient.controls.get(controlUuid) === undefined) {
+      throw new Error(`Loxone UUID ${controlUuid} not found in structure file.`);
+    }
+    const control = this.loxoneClient.controls.get(controlUuid);
+
+    if (!control) {
+      throw new Error(`Loxone control with UUID ${controlUuid} not found.`);
+    }
+
+    this.log.debug(`Found Loxone control with UUID ${controlUuid} type ${control.type}, name ${control.name} in room ${control.room.name}`);
+
+    // find the device constructor based on the type specified
+    const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
+    if (!deviceCtor) {
+      throw new Error(`No registered LoxoneDevice for type '${type}'`);
+    }
+
+    const device = new deviceCtor(control, this, additionalConfig);
+
+    // add battery level if battery UUID definition is there
+    const batteryUUID = additionalConfig['battery'];
+    if (batteryUUID) {
+      device.WithReplacableBattery(batteryUUID);
+    } else {
+      device.WithWiredPower();
+    }
+
+    // pick up states that are related to the device
+    for (const deviceState of device.statesByName.values()) {
+      // filter loxoneClient event emitting by only relevant UUIDs
+      this.loxoneClient.addUuidToWatchList(deviceState.uuid.stringValue);
+
+      // add all watched status UUIDs to the statusDevices map
+      if (this.statusDevices.has(deviceState.uuid.stringValue)) {
+        const devices = this.statusDevices.get(deviceState.uuid.stringValue);
+        if (devices !== undefined) {
+          devices.push(device);
         }
       } else {
-        device.WithWiredPower();
+        this.statusDevices.set(deviceState.uuid.stringValue, [device]);
       }
-
-      for (const deviceState of device.statesByName.values()) {
-        // filter loxoneClient event emitting by only relevant UUIDs
-        this.loxoneClient.addUuidToWatchList(deviceState.uuid.stringValue);
-
-        // add all watched status UUIDs to the statusDevices map
-        if (this.statusDevices.has(deviceState.uuid.stringValue)) {
-          const devices = this.statusDevices.get(deviceState.uuid.stringValue);
-          if (devices !== undefined) {
-            devices.push(device);
-          }
-        } else {
-          this.statusDevices.set(deviceState.uuid.stringValue, [device]);
-        }
-      }
-
-      // add potentially missing types
-      device.Endpoint.addRequiredClusterServers();
-
-      this.allDevices.push(device);
-
-      // register with Matterbridge
-      await device.registerWithPlatform();
     }
+
+    // add potentially missing types
+    device.Endpoint.addRequiredClusterServers();
+
+    // keep reference to the device
+    this.allDevices.push(device);
+
+    // register with Matterbridge
+    await device.registerWithPlatform();
   }
 
   override async onChangeLoggerLevel(logLevel: LogLevel): Promise<void> {

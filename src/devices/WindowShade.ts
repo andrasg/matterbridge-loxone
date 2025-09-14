@@ -1,7 +1,7 @@
 import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
@@ -177,6 +177,12 @@ class WindowShade extends LoxoneDevice<StateNameType> {
 
     this.updateAttributesFromInternalState();
   }
+
+  static override typeNames(): string[] {
+    return ['shade', 'windowshade', 'shading'];
+  }
 }
+
+RegisterLoxoneDevice(WindowShade);
 
 export { WindowShade };

@@ -4,6 +4,7 @@ import { TemperatureMeasurement } from 'matterbridge/matter/clusters';
 import { SingleDataPointSensor, ValueOnlyStateNameKeys, ValueOnlyStateNames, ValueOnlyStateNamesType } from './SingleDataPointSensor.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { RegisterLoxoneDevice } from './LoxoneDevice.js';
 
 class TemperatureSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -19,6 +20,12 @@ class TemperatureSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   override valueConverter(event: LoxoneValueEvent | undefined): number {
     return event ? Math.round(event.value * 100) : 0;
   }
+
+  static override typeNames(): string[] {
+    return ['temperature'];
+  }
 }
+
+RegisterLoxoneDevice(TemperatureSensor);
 
 export { TemperatureSensor };

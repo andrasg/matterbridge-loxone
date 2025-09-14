@@ -15,18 +15,19 @@ export const BASE_STATE_NAMES = ['battery'] as const;
 export type BaseStateNameType = (typeof BASE_STATE_NAMES)[number];
 
 // interface for allowing maintenance of device registry
+// allow additional constructor arguments for device subclasses that require extra params
 export interface ILoxoneDevice {
   // allow additional constructor arguments for device subclasses that require extra params
-  new (control: Control, platform: LoxonePlatform, nameOverride?: string): LoxoneDevice;
+  new (control: Control, platform: LoxonePlatform, additionalConfig: AdditionalConfig): LoxoneDevice;
   typeNames(): string[];
-  nameExtractor(control: Control, platform: LoxonePlatform, additionalConfig: string): string | undefined;
 }
 
-// decorator function for allowing registration of a device type
-export function RegisterDevice<T extends ILoxoneDevice>(ctor: T): T {
+export function RegisterLoxoneDevice(ctor: ILoxoneDevice): ILoxoneDevice {
   LoxoneDevice.registerSubclass(ctor as unknown as typeof LoxoneDevice);
   return ctor;
 }
+
+export type AdditionalConfig = Record<string, string>;
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.

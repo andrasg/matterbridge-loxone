@@ -1,7 +1,7 @@
 import { bridgedNode, MatterbridgeEndpoint, powerSource, smokeCoAlarm } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { SmokeCoAlarm } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
@@ -27,6 +27,9 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
       'smoke alarm',
       `${SmokeAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
     );
+
+    const supportsSmoke = control.structureSection.details.availableAlarms & 0x01;
+    if (!supportsSmoke) throw new Error(`Control ${control.name} does not support smoke alarms.`);
 
     const latestCause = this.getLatestValueEvent(StateNames.level);
     const latestLevel = this.getLatestValueEvent(StateNames.alarmCause);
@@ -74,6 +77,12 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
     const alarmState = this.calculateAlarmState();
     await this.Endpoint.updateAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
   }
+
+  static override typeNames(): string[] {
+    return ['smoke', 'smokesensor'];
+  }
 }
+
+RegisterLoxoneDevice(SmokeAlarm);
 
 export { SmokeAlarm };

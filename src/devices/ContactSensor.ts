@@ -4,6 +4,7 @@ import { BooleanState } from 'matterbridge/matter/clusters';
 import { ActiveOnlyStateNames, ActiveOnlyStateNamesType, ActiveOnlyStateNameKeys, SingleDataPointSensor } from './SingleDataPointSensor.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { RegisterLoxoneDevice } from './LoxoneDevice.js';
 
 class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -25,5 +26,8 @@ class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
     return ['contactsensor', 'contact'];
   }
 }
+
+// register device with the registry
+RegisterLoxoneDevice(ContactSensor);
 
 export { ContactSensor };

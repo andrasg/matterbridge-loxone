@@ -4,6 +4,7 @@ import { PressureMeasurement } from 'matterbridge/matter/clusters';
 import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType, SingleDataPointSensor } from './SingleDataPointSensor.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { RegisterLoxoneDevice } from './LoxoneDevice.js';
 
 class PressureSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -20,6 +21,12 @@ class PressureSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   override valueConverter(event: LoxoneValueEvent | undefined): number {
     return event ? event.value : 0;
   }
+
+  static override typeNames(): string[] {
+    return ['pressure'];
+  }
 }
+
+RegisterLoxoneDevice(PressureSensor);
 
 export { PressureSensor };

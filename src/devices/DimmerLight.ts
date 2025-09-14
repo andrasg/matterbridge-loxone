@@ -1,7 +1,7 @@
 import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint } from 'matterbridge';
 import { LoxonePlatform } from '../platform.js';
 import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
-import { LoxoneDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';
 import { MatterLevelInfo } from '../data/MatterLevelInfo.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
@@ -65,6 +65,13 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
       await this.Endpoint.updateAttribute(LevelControl.Cluster.id, 'currentLevel', targetLevel.matterLevel, this.Endpoint.log);
     }
   }
+
+  static override typeNames(): string[] {
+    return ['dimmer'];
+  }
 }
+
+// register device with the registry
+RegisterLoxoneDevice(DimmerLight);
 
 export { DimmerLight };

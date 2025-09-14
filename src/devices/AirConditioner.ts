@@ -1,7 +1,7 @@
 import { airConditioner, bridgedNode, MatterbridgeEndpoint, powerSource } from 'matterbridge';
 import { FanControl, OnOff, TemperatureMeasurement, Thermostat } from 'matterbridge/matter/clusters';
 import { LoxonePlatform } from '../platform.js';
-import { LoxoneDevice, RegisterDevice } from './LoxoneDevice.js';
+import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import * as Converters from '../utils/Converters.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
@@ -121,8 +121,7 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
   }
 }
 
-// register explicitly instead of using the decorator so we avoid decorator syntax
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-RegisterDevice(AirConditioner as unknown as any);
+// register device with the registry
+RegisterLoxoneDevice(AirConditioner);
 
 export { AirConditioner };
