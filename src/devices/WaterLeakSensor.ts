@@ -5,6 +5,7 @@ import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 import { RegisterLoxoneDevice } from './LoxoneDevice.js';
+import * as Converters from '../utils/Converters.js';
 
 class WaterLeakSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -19,7 +20,7 @@ class WaterLeakSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): boolean {
-    return event ? event.value === 1 : false;
+    return Converters.booleanValueConverter(event);
   }
 
   static override typeNames(): string[] {

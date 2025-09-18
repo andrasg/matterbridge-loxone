@@ -35,7 +35,7 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
     const state = Converters.onOffValueConverter(latestStateValueEvent);
     const latestTargetTemperatureValueEvent = this.getLatestValueEvent(StateNames.targetTemperature);
     const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(StateNames.temperature);
-    const currentTemperature = Converters.temperatureValueConverter(latestCurrentTemperatureValueEvent);
+    const currentTemperature = Converters.numberValueConverter(latestCurrentTemperatureValueEvent);
 
     this.Endpoint = this.createDefaultEndpoint()
       .createDefaultGroupsClusterServer()
@@ -95,13 +95,13 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
         break;
       }
       case StateNames.targetTemperature: {
-        const targetTemperature = Converters.temperatureValueConverter(event);
+        const targetTemperature = Converters.numberValueConverter(event);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', targetTemperature, this.Endpoint.log);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint', targetTemperature, this.Endpoint.log);
         break;
       }
       case StateNames.temperature: {
-        const temperature = Converters.temperatureValueConverter(event);
+        const temperature = Converters.numberValueConverter(event);
         await this.Endpoint.updateAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', temperature, this.Endpoint.log);
         await this.Endpoint.updateAttribute(Thermostat.Cluster.id, 'localTemperature', temperature, this.Endpoint.log);
         break;

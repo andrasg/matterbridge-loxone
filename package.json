@@ -19,7 +19,7 @@
     "matterbridge:enable": "matterbridge -enable .",
     "matterbridge:disable": "matterbridge -disable .",
     "matterbridge:list": "matterbridge -list",
-    "matterbridge:update": "sudo rm -rf /usr/local/share/npm-global/lib/node_modules/matterbridge && npm i matterbridge -g && sudo npm link matterbridge",
+    "matterbridge:update": "sudo rm -rf /usr/local/share/npm-global/lib/node_modules/matterbridge && npm i matterbridge -g && sudo npm link matterbridge && npm list -g matterbridge",
     "matterbridge:cleandata": "rm -rf .matterbridge/*",
     "dev:linkplugin": "npm link",
     "dev:linkmatterbridge": "npm link matterbridge",

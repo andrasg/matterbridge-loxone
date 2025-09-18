@@ -130,7 +130,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   }
 
   private async createDeviceRegistry() {
-    this.log.info('Reading LoxoneDevice classes...');
+    this.log.info('Creating LoxoneDevice registry...');
     this.deviceCtorByType.clear();
 
     const subclasses = LoxoneDevice.getRegisteredSubclasses();
@@ -215,6 +215,8 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     }
 
     const device = new deviceCtor(control, this, additionalConfig);
+
+    this.log.info(`Created device of type '${type}': ${device.longname}`);
 
     // add battery level if battery UUID definition is there
     const batteryUUID = additionalConfig['battery'];

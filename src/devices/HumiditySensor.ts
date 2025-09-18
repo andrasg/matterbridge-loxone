@@ -5,6 +5,7 @@ import { SingleDataPointSensor, ValueOnlyStateNamesType, ValueOnlyStateNameKeys 
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 import { RegisterLoxoneDevice } from './LoxoneDevice.js';
+import * as Converters from '../utils/Converters.js';
 
 class HumiditySensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -19,7 +20,7 @@ class HumiditySensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): number {
-    return event ? Math.round(event.value * 100) : 0;
+    return Converters.numberValueConverter(event);
   }
 
   static override typeNames(): string[] {

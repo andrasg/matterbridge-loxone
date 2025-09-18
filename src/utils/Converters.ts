@@ -5,8 +5,12 @@ export function onOffValueConverter(event: LoxoneValueEvent | undefined): boolea
   return event ? (event.value === 1 ? true : false) : false;
 }
 
-export function temperatureValueConverter(event: LoxoneValueEvent | undefined): number {
+export function numberValueConverter(event: LoxoneValueEvent | undefined): number {
   return event ? event.value * 100 : 0;
+}
+
+export function booleanValueConverter(event: LoxoneValueEvent | undefined): boolean {
+  return event ? event.value === 1 : false;
 }
 
 export function systemModeValueConverter(event: LoxoneValueEvent | undefined): Thermostat.SystemMode {
