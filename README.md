@@ -49,7 +49,7 @@ The plugin needs to be configured before use with the following values:
 
 The UUID and type mapping needs to be supplied in the format of:
 
-`<UUID>,<type>,<optionalsettings>`
+`<UUID>,<type>,<comma_separated_optionalsettings_key_value_pairs>`
 
 The plugin supports the following types
 |type string|mapped Matter device type|mapped Loxone device|additional aparameters|notes|
@@ -67,18 +67,20 @@ The plugin supports the following types
 |light|switch (light)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |dimmer|dimmable light|`LightControllerV2` circuit|none|UUID needs to be in the format `<UUID>/AIxx`
-|mood|switch (light)|`LightControllerV2` mood|ID of the mood||
-|radio|switch|`Radio`|output number of the radio button||
+|mood|switch (light)|`LightControllerV2` mood|`moodId` ID of the mood||
+|radio|switch|`Radio`|`outputId` output number of the radio button||
 |smoke|smoke alarm|`SmokeAlarm`|none||
 |ac|airconditioner|`AcControl` device|none||
 |shade|window covering|Window shade or roof shade device|none||
 
-Additionally, all devices support specifying remaining battery %, by appending:
-`,battery_<batterystatusUUID>` to the end of the UUID and type string.
+Optional settings are in the format of `key=value` and are separated by a comma.
+
+Additionally, all devices support specifying remaining battery %, by adding a `battery` setting to the optional settings:
+`battery=<batterystatusUUID>`.
 
 > Don't forget to restart matterbridge after making a configuration change
 
 #### Examples:
-- `161f7bd3-0200-79f6-ffff796b564594c0,radio,2` - results in a switch that corresponds to the second output of the radio button
-- `121b4263-0076-a710-ffff796b564594c0,mood,5` - results in a light that corresponds to mood with ID 5 on a light controller
-- `120f23ad-02cd-14f3-ffff796b564594c0,motion,battery_1df94ed2-00f0-7c32-ffff796b564594c0` - results in an occupancy sensor with batter % remaining displayed
+- `161f7bd3-0200-79f6-ffff796b564594c0,radio,outputId=2` - results in a switch that corresponds to the second output of the radio button
+- `121b4263-0076-a710-ffff796b564594c0,mood,moodId=5` - results in a light that corresponds to mood with ID 5 on a light controller
+- `120f23ad-02cd-14f3-ffff796b564594c0,motion,battery=1df94ed2-00f0-7c32-ffff796b564594c0` - results in an occupancy sensor with batter % remaining displayed
