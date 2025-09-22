@@ -24,6 +24,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   public initialUpdateEvents: (LoxoneValueEvent | LoxoneTextEvent)[] = [];
   public logEvents = false;
   private dumpControls = false;
+  private dumpStates = false;
 
   constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
     super(matterbridge, log, config);
@@ -44,6 +45,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     if (config.uuidsandtypes) this.loxoneUUIDsAndTypes = config.uuidsandtypes as string[];
     if (config.logevents) this.logEvents = config.logevents as boolean;
     if (config.dumpcontrols) this.dumpControls = config.dumpcontrols as boolean;
+    if (config.dumpstates) this.dumpStates = config.dumpstates as boolean;
 
     // validate the Loxone config
     if (!isValidString(this.loxoneIP)) {
@@ -91,6 +93,13 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       this.log.info(`Dumping all Loxone control UUIDs:`);
       this.loxoneClient.controls.forEach((control, uuid) => {
         this.log.info(`${control.room.name}/${control.name}/${control.type} - Control UUID: ${uuid}`);
+      });
+    }
+
+    if (this.dumpStates) {
+      this.log.info(`Dumping all Loxone state UUIDs:`);
+      this.loxoneClient.states.forEach((state, uuid) => {
+        this.log.info(`${state.parentControl.room.name}/${state.parentControl.name}/${state.name} - State UUID: ${uuid}`);
       });
     }
 

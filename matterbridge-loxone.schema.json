@@ -46,6 +46,11 @@
         "type": "boolean",
         "default": false
       },
+      "dumpstates": {
+        "description": "Enable to dump all possible Loxone state UUIDs",
+        "type": "boolean",
+        "default": false
+      },
       "logevents": {
         "description": "Enable to dump all received Loxone events",
         "type": "boolean",

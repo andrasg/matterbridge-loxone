@@ -27,6 +27,7 @@ This plugin supports the following Loxone device types
 - Radio button values
 - Shading
 - Smoke alarm
+- AC
 
 ## Installation
 
@@ -43,6 +44,8 @@ The plugin needs to be configured before use with the following values:
 - passowrd - the passowrd to use for connecting
 - uuidsandtypes - list of UUID's and types to map to matter devices
 - logevents - when enabled, log will contain all received Loxone events, not just the ones that have been configured (careful, lot of log!)
+- dumpcontrols - dumps all discovered Loxone controls and their UUIDs
+- dumpstates - dumps all discovered Loxone states and their UUIDs
 - debug - enables debug mode on the plugin
 
 ### UUID and type mapping
