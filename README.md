@@ -48,6 +48,8 @@ The plugin needs to be configured before use with the following values:
 - dumpstates - dumps all discovered Loxone states and their UUIDs
 - debug - enables debug mode on the plugin
 
+> NOTE: Breaking changes in `v2.0.0`: configuration moved to a key-value approach from the simple comma-separated approach.
+
 ### UUID and type mapping
 
 The UUID and type mapping needs to be supplied in the format of:
