@@ -61,7 +61,7 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
     const targetLevel = LoxoneLevelInfo.fromLoxoneEvent(event);
     await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', targetLevel.onOff, this.Endpoint.log);
 
-    if (event.value === 1) {
+    if (event.value !== 1) {
       await this.Endpoint.updateAttribute(LevelControl.Cluster.id, 'currentLevel', targetLevel.matterLevel, this.Endpoint.log);
     }
   }
