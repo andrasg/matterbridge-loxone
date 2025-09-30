@@ -27,6 +27,7 @@ This plugin supports the following Loxone device types
 - Radio button values
 - Shading
 - Smoke alarm
+- CO sensor
 - AC
 
 ## Installation
@@ -59,12 +60,12 @@ The UUID and type mapping needs to be supplied in the format of:
 The plugin supports the following types
 |type string|mapped Matter device type|mapped Loxone device|additional aparameters|notes|
 |--|--|--|--|--|
-|contactsensor|contact sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|humidity|humidity sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|temperature|temperature sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|pressure|pressure sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|waterleak|water leak sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
-|motion|occupancy sensor|any `InfoOnlyAnalog` device (0/1 values)|none|
+|contactsensor|contact sensor|any `InfoOnlyDigital` device (0/1 values)|none|
+|humidity|humidity sensor|any `InfoOnlyAnalog` device (numeric values)|none|
+|temperature|temperature sensor|any `InfoOnlyAnalog` device (numeric values)|none|
+|pressure|pressure sensor|any `InfoOnlyAnalog` device (numeric values)|none|
+|waterleak|water leak sensor|any `InfoOnlyDigital` device (0/1 values)|none|
+|motion|occupancy sensor|any `InfoOnlyDigital` device (0/1 values)|none|
 |switch|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |button|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|switches automatically back to off after 1 second|
 |pushbutton|genericSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|input device only, no Home app UI|
@@ -75,6 +76,7 @@ The plugin supports the following types
 |mood|switch (light)|`LightControllerV2` mood|`moodId` ID of the mood||
 |radio|switch|`Radio`|`outputId` output number of the radio button||
 |smoke|smoke alarm|`SmokeAlarm`|none||
+|co|CO alarm|`InfoOnlyDigital` device (0/1 values)|none||
 |ac|airconditioner|`AcControl` device|none||
 |shade|window covering|Window shade or roof shade device|none||
 
