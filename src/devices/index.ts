@@ -18,6 +18,7 @@ import './SmokeAlarm.js';
 import './TemperatureSensor.js';
 import './WaterLeakSensor.js';
 import './WindowShade.js';
+import './CoAlarm.js';
 
 // This file's main purpose is module evaluation; platform can import it to ensure registration.
 export {};

@@ -1,5 +1,5 @@
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import { Thermostat } from 'matterbridge/matter/clusters';
+import { SmokeCoAlarm, Thermostat } from 'matterbridge/matter/clusters';
 
 export function onOffValueConverter(event: LoxoneValueEvent | undefined): boolean {
   return event ? (event.value === 1 ? true : false) : false;
@@ -11,6 +11,10 @@ export function numberValueConverter(event: LoxoneValueEvent | undefined): numbe
 
 export function booleanValueConverter(event: LoxoneValueEvent | undefined): boolean {
   return event ? event.value === 1 : false;
+}
+
+export function alarmStateValueConverter(event: LoxoneValueEvent | undefined): SmokeCoAlarm.AlarmState {
+  return event?.value === 1 ? SmokeCoAlarm.AlarmState.Critical : SmokeCoAlarm.AlarmState.Normal;
 }
 
 export function systemModeValueConverter(event: LoxoneValueEvent | undefined): Thermostat.SystemMode {
