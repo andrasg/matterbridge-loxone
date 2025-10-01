@@ -5,7 +5,7 @@ import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
-import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType, ValueOnlyStateNameKeys, ValueOnlyStateNames, ValueOnlyStateNamesType } from './SingleDataPointSensor.js';
+import { ActiveOnlyStateNameKeys, ActiveOnlyStateNames, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
 import { alarmStateValueConverter } from '../utils/Converters.js';
 
 class CoAlarm extends LoxoneDevice<ActiveOnlyStateNamesType> {
