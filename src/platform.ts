@@ -1,4 +1,4 @@
-import { Matterbridge, MatterbridgeDynamicPlatform, PlatformConfig } from 'matterbridge';
+import { MatterbridgeDynamicPlatform, PlatformConfig, PlatformMatterbridge } from 'matterbridge';
 import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
@@ -26,8 +26,12 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   private dumpControls = false;
   private dumpStates = false;
 
-  constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig) {
+  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     super(matterbridge, log, config);
+
+    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
+      throw new Error(`This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`);
+    }
 
     if (config.debug) {
       this.debug = true;
