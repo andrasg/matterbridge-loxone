@@ -104,7 +104,7 @@ abstract class LoxoneDevice<T extends string = string> {
     const hash = createHash('sha256').update(this.uniqueStorageKey).digest('hex');
     const serial = hash.substring(0, 16);
 
-    const endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { uniqueStorageKey: this.uniqueStorageKey }, this.platform.config.debug as boolean)
+    const endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { id: this.uniqueStorageKey }, this.platform.config.debug as boolean)
       .createDefaultIdentifyClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
         this.longname,
