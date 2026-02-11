@@ -85,5 +85,3 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --tag ${{ steps.determine_dist_tag.outputs.dist_tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
