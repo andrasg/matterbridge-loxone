@@ -1,5 +1,5 @@
 import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';

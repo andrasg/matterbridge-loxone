@@ -1,5 +1,5 @@
 import { onOffSwitch } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { OnOffDevice } from './OnOffDevice.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
 import { RegisterLoxoneDevice } from './LoxoneDevice.js';

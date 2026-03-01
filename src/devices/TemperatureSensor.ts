@@ -1,5 +1,5 @@
 import { MatterbridgeEndpoint, temperatureSensor } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { TemperatureMeasurement } from 'matterbridge/matter/clusters';
 import { SingleDataPointSensor, ValueOnlyStateNameKeys, ValueOnlyStateNames, ValueOnlyStateNamesType } from './SingleDataPointSensor.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';

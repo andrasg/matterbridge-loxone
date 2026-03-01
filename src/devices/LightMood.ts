@@ -1,5 +1,5 @@
 import { bridgedNode, powerSource, onOffLight, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { OnOff } from 'matterbridge/matter/clusters';
 import { AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
