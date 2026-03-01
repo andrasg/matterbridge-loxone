@@ -1,4 +1,4 @@
-import { MatterbridgeDynamicPlatform, PlatformConfig, PlatformMatterbridge } from 'matterbridge';
+import { MatterbridgeDynamicPlatform, PlatformMatterbridge } from 'matterbridge';
 import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
@@ -7,72 +7,61 @@ import LoxoneClient from 'loxone-ts-api';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import './devices/index.js'; // ensure all devices are loaded
+import { LoxonePlatformConfig } from './LoxonePlatformConfig.js';
 
 export class LoxonePlatform extends MatterbridgeDynamicPlatform {
-  public loxoneIP: string | undefined = undefined;
-  public loxonePort: number | undefined = undefined;
-  public loxoneUsername: string | undefined = undefined;
-  public loxonePassword: string | undefined = undefined;
   public loxoneClient: LoxoneClient;
-  private loxoneUUIDsAndTypes: string[] = [];
-  private debug = false;
   private statusDevices = new Map<string, LoxoneDevice[]>();
   private allDevices: LoxoneDevice[] = [];
   private deviceCtorByType: Map<string, ILoxoneDevice> = new Map<string, ILoxoneDevice>();
   private isPluginConfigured = false;
   private isConfigValid = false;
   public initialUpdateEvents: (LoxoneValueEvent | LoxoneTextEvent)[] = [];
-  public logEvents = false;
-  private dumpControls = false;
-  private dumpStates = false;
 
-  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
+  constructor(
+    matterbridge: PlatformMatterbridge,
+    log: AnsiLogger,
+    override config: LoxonePlatformConfig,
+  ) {
     super(matterbridge, log, config);
 
-    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
-      throw new Error(`This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`);
+    // Verify that Matterbridge is the correct version
+    if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.5.2')) {
+      throw new Error(
+        `This plugin requires Matterbridge version >= "3.5.2". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version in the frontend.`,
+      );
     }
 
-    if (config.debug) {
-      this.debug = true;
+    if (this.config.debug) {
       this.log.info(`${YELLOW}Plugin is running in debug mode${nf}`);
     }
-    this.log.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    this.log.logLevel = this.config.debug ? LogLevel.DEBUG : LogLevel.INFO;
 
-    this.log.info('Initializing Loxone platform');
+    this.log.info(`Initializing platform ${this.config.name}`);
     this.log.debug(`Code build from branch '${GIT_BRANCH}', commit '${GIT_COMMIT}'`);
 
-    if (config.host) this.loxoneIP = config.host as string;
-    if (config.port) this.loxonePort = config.port as number;
-    if (config.username) this.loxoneUsername = config.username as string;
-    if (config.password) this.loxonePassword = config.password as string;
-    if (config.uuidsandtypes) this.loxoneUUIDsAndTypes = config.uuidsandtypes as string[];
-    if (config.logevents) this.logEvents = config.logevents as boolean;
-    if (config.dumpcontrols) this.dumpControls = config.dumpcontrols as boolean;
-    if (config.dumpstates) this.dumpStates = config.dumpstates as boolean;
-
     // validate the Loxone config
-    if (!isValidString(this.loxoneIP)) {
+    if (!isValidString(this.config.host)) {
       throw new Error('Loxone host is not set.');
     }
-    if (!isValidNumber(this.loxonePort, 1, 65535)) {
+    if (!isValidNumber(this.config.port, 1, 65535)) {
       throw new Error('Loxone port is not set.');
     }
-    if (!isValidString(this.loxoneUsername)) {
+    if (!isValidString(this.config.username)) {
       throw new Error('Loxone username is not set.');
     }
-    if (!isValidString(this.loxonePassword)) {
+    if (!isValidString(this.config.password)) {
       throw new Error('Loxone password is not set.');
     }
 
     this.isConfigValid = true;
 
-    this.loxoneClient = new LoxoneClient(`${this.loxoneIP}:${this.loxonePort}`, this.loxoneUsername, this.loxonePassword, {
+    this.loxoneClient = new LoxoneClient(`${this.config.host}:${this.config.port}`, this.config.username, this.config.password, {
       messageLogEnabled: true,
-      logAllEvents: this.logEvents,
+      logAllEvents: this.config.logevents,
     });
 
-    if (this.debug) this.loxoneClient.setLogLevel(LogLevel.DEBUG);
+    if (this.config.debug) this.loxoneClient.setLogLevel(LogLevel.DEBUG);
 
     // setup the connection to Loxone
     this.loxoneClient.on('event_value', this.handleLoxoneEvent.bind(this));
@@ -93,14 +82,14 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     await this.loxoneClient.getStructureFile();
     await this.loxoneClient.parseStructureFile();
 
-    if (this.dumpControls) {
+    if (this.config.dumpcontrols) {
       this.log.info(`Dumping all Loxone control UUIDs:`);
       this.loxoneClient.controls.forEach((control, uuid) => {
         this.log.info(`${control.room.name}/${control.name}/${control.type} - Control UUID: ${uuid}`);
       });
     }
 
-    if (this.dumpStates) {
+    if (this.config.dumpstates) {
       this.log.info(`Dumping all Loxone state UUIDs:`);
       this.loxoneClient.states.forEach((state, uuid) => {
         this.log.info(`${state.parentControl.room.name}/${state.parentControl.name}/${state.name} - State UUID: ${uuid}`);
@@ -178,7 +167,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
     this.log.info('Creating devices...');
 
-    for (const uuidAndType of this.loxoneUUIDsAndTypes) {
+    for (const uuidAndType of this.config.uuidsandtypes) {
       try {
         await this.createDevice(uuidAndType);
       } catch (error) {
@@ -266,7 +255,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
   }
 
   override async onChangeLoggerLevel(logLevel: LogLevel): Promise<void> {
-    if (this.debug) {
+    if (this.config.debug) {
       this.log.info('Plugin is running in debug mode, ignoring logger level change');
       return;
     }

@@ -1,5 +1,5 @@
 import { bridgedNode, MatterbridgeEndpoint, powerSource, smokeCoAlarm } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { SmokeCoAlarm } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';

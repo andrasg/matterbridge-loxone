@@ -1,5 +1,5 @@
 import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';

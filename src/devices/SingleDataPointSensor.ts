@@ -1,6 +1,6 @@
 import { bridgedNode, DeviceTypeDefinition, powerSource } from 'matterbridge';
 import { ClusterId } from 'matterbridge/matter';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { LoxoneDevice } from './LoxoneDevice.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';

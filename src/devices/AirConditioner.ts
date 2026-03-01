@@ -1,6 +1,6 @@
 import { airConditioner, bridgedNode, MatterbridgeEndpoint, powerSource } from 'matterbridge';
 import { FanControl, OnOff, TemperatureMeasurement, Thermostat } from 'matterbridge/matter/clusters';
-import { LoxonePlatform } from '../platform.js';
+import { LoxonePlatform } from '../LoxonePlatform.js';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
 import * as Converters from '../utils/Converters.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
