@@ -1,5 +1,5 @@
 import { MatterbridgeDynamicPlatform, PlatformMatterbridge } from 'matterbridge';
-import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
+import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
 import { createLightOutputDevice } from './devices/LightOutput.js';
