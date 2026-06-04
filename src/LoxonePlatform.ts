@@ -1,5 +1,6 @@
 import { MatterbridgeDynamicPlatform, PlatformMatterbridge } from 'matterbridge';
 import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'matterbridge/logger';
+import { LogLevel as LoxoneLogLevel } from 'node-ansi-logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
 import { createLightOutputDevice } from './devices/LightOutput.js';
@@ -62,7 +63,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       logAllEvents: this.config.logevents,
     });
 
-    if (this.config.debug) this.loxoneClient.setLogLevel(LogLevel.DEBUG);
+    if (this.config.debug) this.loxoneClient.setLogLevel(LoxoneLogLevel.DEBUG);
 
     // setup the connection to Loxone
     this.loxoneClient.on('event_value', this.handleLoxoneEvent.bind(this));
