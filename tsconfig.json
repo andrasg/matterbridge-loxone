@@ -7,6 +7,7 @@
       "module": "nodenext",
       "rootDir": "./src",
       "moduleResolution": "nodenext",
+      "types": ["node"],
       "resolveJsonModule": true,
       "allowJs": true,
       "checkJs": true,

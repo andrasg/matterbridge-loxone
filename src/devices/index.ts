@@ -19,6 +19,8 @@ import './TemperatureSensor.js';
 import './WaterLeakSensor.js';
 import './WindowShade.js';
 import './CoAlarm.js';
+import './RgbwLight.js';
+import './TunableWhiteLight.js';
 
 // This file's main purpose is module evaluation; platform can import it to ensure registration.
 export {};

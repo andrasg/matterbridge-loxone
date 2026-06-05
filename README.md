@@ -21,6 +21,8 @@ This plugin supports the following Loxone device types
 - Lightcontroller
   - on/off light
   - dimmable light
+  - tunable-white (color temperature) light
+  - RGBW (full color) light
   - mood
 - Switches and pushbuttons
 - Any read-only component or sensor with an `InfoOnlyAnalog` (0 or 1 digital value) internal type (memory flags, status values, switch outputs, etc.)
@@ -73,6 +75,7 @@ The plugin supports the following types
 |light|switch (light)|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|
 |dimmer|dimmable light|`LightControllerV2` circuit|none|UUID needs to be in the format `<UUID>/AIxx`
+|lightoutput|auto-detected (see below)|any `LightControllerV2` output (subcontrol)|none|UUID needs to be in the format `<UUID>/AIxx`. The Matter device type is auto-detected from the output: `ColorPickerV2`/`TunableWhite` → color temperature light, `ColorPickerV2`/`Rgb` or `Lumitech` → RGBW light, `Dimmer` → dimmable light, `Switch` → on/off light|
 |mood|switch (light)|`LightControllerV2` mood|`moodId` ID of the mood||
 |radio|switch|`Radio`|`outputId` output number of the radio button||
 |smoke|smoke alarm|`SmokeAlarm`|none||
@@ -90,4 +93,5 @@ Additionally, all devices support specifying remaining battery %, by adding a `b
 #### Examples:
 - `161f7bd3-0200-79f6-ffff796b564594c0,radio,outputId=2` - results in a switch that corresponds to the second output of the radio button
 - `121b4263-0076-a710-ffff796b564594c0,mood,moodId=5` - results in a light that corresponds to mood with ID 5 on a light controller
+- `12233b6d-039a-ea64-ffff796b564594c0/AI9,lightoutput` - results in a color/white light auto-detected from the `AI9` output of a light controller
 - `120f23ad-02cd-14f3-ffff796b564594c0,motion,battery=1df94ed2-00f0-7c32-ffff796b564594c0` - results in an occupancy sensor with batter % remaining displayed

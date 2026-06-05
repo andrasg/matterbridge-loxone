@@ -1,7 +1,8 @@
 import { MatterbridgeDynamicPlatform, PlatformMatterbridge } from 'matterbridge';
-import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'node-ansi-logger';
+import { AnsiLogger, YELLOW, LogLevel, CYAN, nf } from 'matterbridge/logger';
 import { isValidNumber, isValidString } from 'matterbridge/utils';
 import { LoxoneDevice, ILoxoneDevice } from './devices/LoxoneDevice.js';
+import { createLightOutputDevice } from './devices/LightOutput.js';
 import { GIT_BRANCH, GIT_COMMIT } from './gitInfo.js';
 import LoxoneClient from 'loxone-ts-api';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
@@ -61,7 +62,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       logAllEvents: this.config.logevents,
     });
 
-    if (this.config.debug) this.loxoneClient.setLogLevel(LogLevel.DEBUG);
+    if (this.config.debug) this.loxoneClient.setLogLevel('debug');
 
     // setup the connection to Loxone
     this.loxoneClient.on('event_value', this.handleLoxoneEvent.bind(this));
@@ -210,13 +211,20 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
 
     this.log.debug(`Found Loxone control with UUID ${controlUuid} type ${control.type}, name ${control.name} in room ${control.room.name}`);
 
-    // find the device constructor based on the type specified
-    const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
-    if (!deviceCtor) {
-      throw new Error(`No registered LoxoneDevice for type '${type}'`);
-    }
+    let device: LoxoneDevice;
 
-    const device = new deviceCtor(control, this, additionalConfig);
+    // the 'lightoutput' keyword auto-detects the Matter device type from the resolved subcontrol
+    if (type.toLowerCase() === 'lightoutput') {
+      device = createLightOutputDevice(control, this, additionalConfig);
+    } else {
+      // find the device constructor based on the type specified
+      const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
+      if (!deviceCtor) {
+        throw new Error(`No registered LoxoneDevice for type '${type}'`);
+      }
+
+      device = new deviceCtor(control, this, additionalConfig);
+    }
 
     this.log.info(`Created device of type '${type}': ${device.longname}`);
 
