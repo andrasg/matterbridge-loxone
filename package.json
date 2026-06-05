@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "loxone-ts-api": "^1.3.3",
-    "node-ansi-logger": "^3.2.1",
     "node-persist-manager": "^2.0.2"
   },
   "devDependencies": {
