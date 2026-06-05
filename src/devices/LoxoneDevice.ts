@@ -1,10 +1,9 @@
-import { DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
+import { CommandHandlerFunction, CommandHandlerPayload, CommandHandlerResponse, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
 import { AtLeastOne, ClusterId } from 'matterbridge/matter';
 import { PowerSource } from 'matterbridge/matter/clusters';
 import { createHash } from 'node:crypto';
 import { BatteryLevelInfo } from '../data/BatteryLevelInfo.js';
 import { LoxonePlatform } from '../LoxonePlatform.js';
-import { CommandData } from '../utils/CommandData.js';
 import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
 import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
 import Control from 'loxone-ts-api/dist/Structure/Control.js';
@@ -163,9 +162,9 @@ abstract class LoxoneDevice<T extends string = string> {
   /**
    * Registers a Loxone command handler for the event. The command will be sent to the Loxone API.
    * @param event One of {@link MatterbridgeEndpointCommands}.
-   * @param loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link command} will be used as the Loxone command.
+   * @param loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link event} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler(event: keyof MatterbridgeEndpointCommands, loxoneCommandFormatter?: (data: CommandData) => string) {
+  public addLoxoneCommandHandler<T extends keyof MatterbridgeEndpointCommands>(event: T, loxoneCommandFormatter?: (data: CommandHandlerPayload<T>) => string) {
     // if the formatter is not provided, use the event name as the command
     if (loxoneCommandFormatter === undefined) {
       loxoneCommandFormatter = () => {
@@ -174,10 +173,11 @@ abstract class LoxoneDevice<T extends string = string> {
     }
 
     // delegate for executing the loxone command
-    const delegate = async (data: CommandData) => {
+    const delegate: CommandHandlerFunction<T> = async (data: CommandHandlerPayload<T>) => {
       const commandString = loxoneCommandFormatter?.(data);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
       await this.platform.loxoneClient.control(this.control.structureSection.uuidAction, commandString);
+      return undefined as CommandHandlerResponse<T>;
     };
 
     // register the delegate for the event

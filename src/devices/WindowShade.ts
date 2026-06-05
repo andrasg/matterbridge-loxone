@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint } from 'matterbridge';
+import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
 import { LoxonePlatform } from '../LoxonePlatform.js';
 import { WindowCovering } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
@@ -47,8 +47,8 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     this.addLoxoneCommandHandler('upOrOpen', () => {
       return 'FullUp';
     });
-    this.addLoxoneCommandHandler('goToLiftPercentage', ({ request: { liftPercent100thsValue } }) => {
-      const targetNumber = Math.round(liftPercent100thsValue / 100);
+    this.addLoxoneCommandHandler('goToLiftPercentage', (data: CommandHandlerPayload<'goToLiftPercentage'>) => {
+      const targetNumber = Math.round(data.request.liftPercent100thsValue / 100);
       let loxoneCommand;
       if (targetNumber < 1) {
         loxoneCommand = 'FullUp';

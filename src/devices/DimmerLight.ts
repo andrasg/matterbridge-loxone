@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint } from 'matterbridge';
+import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
 import { LoxonePlatform } from '../LoxonePlatform.js';
 import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
@@ -36,12 +36,12 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
 
     this.addLoxoneCommandHandler('on');
     this.addLoxoneCommandHandler('off');
-    this.addLoxoneCommandHandler('moveToLevel', ({ request: { level } }) => {
-      const value = MatterLevelInfo.fromMatterNumber(level);
+    this.addLoxoneCommandHandler('moveToLevel', (data: CommandHandlerPayload<'moveToLevel'>) => {
+      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return value.loxoneLevel.toString();
     });
-    this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => {
-      const value = MatterLevelInfo.fromMatterNumber(level);
+    this.addLoxoneCommandHandler('moveToLevelWithOnOff', (data: CommandHandlerPayload<'moveToLevelWithOnOff'>) => {
+      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return value.loxoneLevel.toString();
     });
   }

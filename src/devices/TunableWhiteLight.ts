@@ -1,4 +1,4 @@
-import { bridgedNode, powerSource, colorTemperatureLight, MatterbridgeEndpoint } from 'matterbridge';
+import { bridgedNode, powerSource, colorTemperatureLight, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
 import { LoxonePlatform } from '../LoxonePlatform.js';
 import { OnOff, LevelControl, ColorControl } from 'matterbridge/matter/clusters';
 import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
@@ -69,16 +69,16 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
 
     this.addLoxoneCommandHandler('on', () => `setBrightness/${this.lastNonZeroBrightness}`);
     this.addLoxoneCommandHandler('off', () => 'setBrightness/0');
-    this.addLoxoneCommandHandler('moveToLevel', ({ request: { level } }) => {
-      const value = MatterLevelInfo.fromMatterNumber(level);
+    this.addLoxoneCommandHandler('moveToLevel', (data: CommandHandlerPayload<'moveToLevel'>) => {
+      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return `setBrightness/${value.loxoneLevel}`;
     });
-    this.addLoxoneCommandHandler('moveToLevelWithOnOff', ({ request: { level } }) => {
-      const value = MatterLevelInfo.fromMatterNumber(level);
+    this.addLoxoneCommandHandler('moveToLevelWithOnOff', (data: CommandHandlerPayload<'moveToLevelWithOnOff'>) => {
+      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return `setBrightness/${value.loxoneLevel}`;
     });
-    this.addLoxoneCommandHandler('moveToColorTemperature', ({ request: { colorTemperatureMireds } }) => {
-      const kelvin = clamp(miredsToKelvin(colorTemperatureMireds), this.minKelvin, this.maxKelvin);
+    this.addLoxoneCommandHandler('moveToColorTemperature', (data: CommandHandlerPayload<'moveToColorTemperature'>) => {
+      const kelvin = clamp(miredsToKelvin(data.request.colorTemperatureMireds), this.minKelvin, this.maxKelvin);
       this.currentKelvin = kelvin;
       return `temp(${this.currentBrightness},${kelvin})`;
     });
@@ -125,7 +125,7 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
   }
 
   static override typeNames(): string[] {
-    return [];
+    return ['tunableWhite'];
   }
 }
 
