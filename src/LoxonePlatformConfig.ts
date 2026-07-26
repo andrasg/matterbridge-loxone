@@ -1,4 +1,4 @@
-import { PlatformConfig } from 'matterbridge';
+import type { PlatformConfig } from "matterbridge";
 
 export type LoxonePlatformConfig = PlatformConfig & {
   host: string;

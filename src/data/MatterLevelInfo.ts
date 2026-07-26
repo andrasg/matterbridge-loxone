@@ -6,11 +6,11 @@ class MatterLevelInfo {
     this.calculateLevel(event);
   }
 
-  static fromMatterNumber(event: number) {
+  static fromMatterNumber(event: number): MatterLevelInfo {
     return new MatterLevelInfo(event);
   }
 
-  private calculateLevel(event: number) {
+  private calculateLevel(event: number): void {
     this.matterLevel = event;
     this.loxoneLevel = this.convertMatterToLoxone(event);
   }

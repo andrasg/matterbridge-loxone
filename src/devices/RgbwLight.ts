@@ -1,19 +1,34 @@
-import { bridgedNode, powerSource, extendedColorLight, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { OnOff, LevelControl, ColorControl } from 'matterbridge/matter/clusters';
-import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';
-import { MatterLevelInfo } from '../data/MatterLevelInfo.js';
-import { ColorInfo, kelvinToMireds, miredsToKelvin, clamp, loxoneHueToMatter, loxoneSaturationToMatter, matterHueToLoxone, matterSaturationToLoxone } from '../data/ColorInfo.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import {
+  bridgedNode,
+  powerSource,
+  extendedColorLight,
+  type MatterbridgeEndpoint,
+  type CommandHandlerPayload,
+} from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { OnOff, LevelControl, ColorControl } from "matterbridge/matter/clusters";
+import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneLevelInfo } from "../data/LoxoneLevelInfo.js";
+import { MatterLevelInfo } from "../data/MatterLevelInfo.js";
+import {
+  ColorInfo,
+  kelvinToMireds,
+  miredsToKelvin,
+  clamp,
+  loxoneHueToMatter,
+  loxoneSaturationToMatter,
+  matterHueToLoxone,
+  matterSaturationToLoxone,
+} from "../data/ColorInfo.js";
+import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
 const StateNames = {
-  color: 'color',
+  color: "color",
 } as const;
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const StateNameKeys = Object.values(StateNames);
 
 const DEFAULT_MIN_KELVIN = 2700;
 const DEFAULT_MAX_KELVIN = 6500;
@@ -44,8 +59,8 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
       platform,
       [extendedColorLight, bridgedNode, powerSource],
       StateNameKeys,
-      'rgbw light',
-      `${RgbwLight.name}_${control.structureSection.uuidAction.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      "rgbw light",
+      `${RgbwLight.name}_${control.structureSection.uuidAction.replace(/[^a-zA-Z0-9]/g, "_")}`,
     );
 
     const range = RgbwLight.readKelvinRange(control);
@@ -59,10 +74,10 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
     if (info) {
       this.currentBrightness = info.brightness;
       if (info.brightness > 0) this.lastNonZeroBrightness = info.brightness;
-      if (info.kind === 'hsv') {
+      if (info.kind === "hsv") {
         this.currentHue = info.hue;
         this.currentSaturation = info.saturation;
-      } else if (info.kind === 'temp' && info.kelvin > 0) {
+      } else if (info.kind === "temp" && info.kelvin > 0) {
         this.currentKelvin = clamp(info.kelvin, this.minKelvin, this.maxKelvin);
       }
     }
@@ -74,76 +89,130 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
       .createDefaultGroupsClusterServer()
       .createDefaultOnOffClusterServer(level.onOff)
       .createDefaultLevelControlClusterServer(level.matterLevel)
-      .createHsColorControlClusterServer(loxoneHueToMatter(this.currentHue), loxoneSaturationToMatter(this.currentSaturation), initialMireds, this.minMireds, this.maxMireds);
+      .createHsColorControlClusterServer(
+        loxoneHueToMatter(this.currentHue),
+        loxoneSaturationToMatter(this.currentSaturation),
+        initialMireds,
+        this.minMireds,
+        this.maxMireds,
+      );
 
-    this.addLoxoneCommandHandler('on', () => `setBrightness/${this.lastNonZeroBrightness}`);
-    this.addLoxoneCommandHandler('off', () => 'setBrightness/0');
-    this.addLoxoneCommandHandler('moveToLevel', (data: CommandHandlerPayload<'moveToLevel'>) => {
+    this.addLoxoneCommandHandler("on", () => `setBrightness/${this.lastNonZeroBrightness}`);
+    this.addLoxoneCommandHandler("off", () => "setBrightness/0");
+    this.addLoxoneCommandHandler("moveToLevel", (data: CommandHandlerPayload<"moveToLevel">) => {
       const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return `setBrightness/${value.loxoneLevel}`;
     });
-    this.addLoxoneCommandHandler('moveToLevelWithOnOff', (data: CommandHandlerPayload<'moveToLevelWithOnOff'>) => {
-      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
-      return `setBrightness/${value.loxoneLevel}`;
-    });
-    this.addLoxoneCommandHandler('moveToHue', (data: CommandHandlerPayload<'moveToHue'>) => {
+    this.addLoxoneCommandHandler(
+      "moveToLevelWithOnOff",
+      (data: CommandHandlerPayload<"moveToLevelWithOnOff">) => {
+        const value = MatterLevelInfo.fromMatterNumber(data.request.level);
+        return `setBrightness/${value.loxoneLevel}`;
+      },
+    );
+    this.addLoxoneCommandHandler("moveToHue", (data: CommandHandlerPayload<"moveToHue">) => {
       this.currentHue = matterHueToLoxone(data.request.hue);
       return this.buildHsvCommand();
     });
-    this.addLoxoneCommandHandler('moveToSaturation', (data: CommandHandlerPayload<'moveToSaturation'>) => {
-      this.currentSaturation = matterSaturationToLoxone(data.request.saturation);
-      return this.buildHsvCommand();
-    });
-    this.addLoxoneCommandHandler('moveToHueAndSaturation', (data: CommandHandlerPayload<'moveToHueAndSaturation'>) => {
-      this.currentHue = matterHueToLoxone(data.request.hue);
-      this.currentSaturation = matterSaturationToLoxone(data.request.saturation);
-      return this.buildHsvCommand();
-    });
-    this.addLoxoneCommandHandler('moveToColorTemperature', (data: CommandHandlerPayload<'moveToColorTemperature'>) => {
-      const kelvin = clamp(miredsToKelvin(data.request.colorTemperatureMireds), this.minKelvin, this.maxKelvin);
-      this.currentKelvin = kelvin;
-      return `temp(${this.currentBrightness},${kelvin})`;
-    });
+    this.addLoxoneCommandHandler(
+      "moveToSaturation",
+      (data: CommandHandlerPayload<"moveToSaturation">) => {
+        this.currentSaturation = matterSaturationToLoxone(data.request.saturation);
+        return this.buildHsvCommand();
+      },
+    );
+    this.addLoxoneCommandHandler(
+      "moveToHueAndSaturation",
+      (data: CommandHandlerPayload<"moveToHueAndSaturation">) => {
+        this.currentHue = matterHueToLoxone(data.request.hue);
+        this.currentSaturation = matterSaturationToLoxone(data.request.saturation);
+        return this.buildHsvCommand();
+      },
+    );
+    this.addLoxoneCommandHandler(
+      "moveToColorTemperature",
+      (data: CommandHandlerPayload<"moveToColorTemperature">) => {
+        const kelvin = clamp(
+          miredsToKelvin(data.request.colorTemperatureMireds),
+          this.minKelvin,
+          this.maxKelvin,
+        );
+        this.currentKelvin = kelvin;
+        return `temp(${this.currentBrightness},${kelvin})`;
+      },
+    );
   }
 
   private buildHsvCommand(): string {
     return `hsv(${this.currentHue},${this.currentSaturation},${this.currentBrightness})`;
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneTextEvent)) return;
 
     await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(event));
   }
 
-  override async populateInitialState() {
-    await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(this.getLatestTextEvent(StateNames.color)));
+  override async populateInitialState(): Promise<void> {
+    await this.updateAttributesFromColorInfo(
+      ColorInfo.fromEvent(this.getLatestTextEvent(StateNames.color)),
+    );
   }
 
-  private async updateAttributesFromColorInfo(info: ColorInfo | undefined) {
+  private async updateAttributesFromColorInfo(info: ColorInfo | undefined): Promise<void> {
     if (!info) return;
 
     this.currentBrightness = info.brightness;
     if (info.brightness > 0) this.lastNonZeroBrightness = info.brightness;
 
     const level = new LoxoneLevelInfo(info.brightness);
-    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', level.onOff, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.id, "onOff", level.onOff, this.Endpoint.log);
 
     if (info.brightness > 0) {
-      await this.Endpoint.updateAttribute(LevelControl.Cluster.id, 'currentLevel', level.matterLevel, this.Endpoint.log);
+      await this.Endpoint.updateAttribute(
+        LevelControl.id,
+        "currentLevel",
+        level.matterLevel,
+        this.Endpoint.log,
+      );
     }
 
-    if (info.kind === 'hsv') {
+    if (info.kind === "hsv") {
       this.currentHue = info.hue;
       this.currentSaturation = info.saturation;
-      await this.Endpoint.updateAttribute(ColorControl.Cluster.id, 'colorMode', ColorControl.ColorMode.CurrentHueAndCurrentSaturation, this.Endpoint.log);
-      await this.Endpoint.updateAttribute(ColorControl.Cluster.id, 'currentHue', loxoneHueToMatter(info.hue), this.Endpoint.log);
-      await this.Endpoint.updateAttribute(ColorControl.Cluster.id, 'currentSaturation', loxoneSaturationToMatter(info.saturation), this.Endpoint.log);
-    } else if (info.kind === 'temp' && info.kelvin > 0) {
+      await this.Endpoint.updateAttribute(
+        ColorControl.id,
+        "colorMode",
+        ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        this.Endpoint.log,
+      );
+      await this.Endpoint.updateAttribute(
+        ColorControl.id,
+        "currentHue",
+        loxoneHueToMatter(info.hue),
+        this.Endpoint.log,
+      );
+      await this.Endpoint.updateAttribute(
+        ColorControl.id,
+        "currentSaturation",
+        loxoneSaturationToMatter(info.saturation),
+        this.Endpoint.log,
+      );
+    } else if (info.kind === "temp" && info.kelvin > 0) {
       this.currentKelvin = clamp(info.kelvin, this.minKelvin, this.maxKelvin);
       const mireds = clamp(kelvinToMireds(this.currentKelvin), this.minMireds, this.maxMireds);
-      await this.Endpoint.updateAttribute(ColorControl.Cluster.id, 'colorMode', ColorControl.ColorMode.ColorTemperatureMireds, this.Endpoint.log);
-      await this.Endpoint.updateAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds', mireds, this.Endpoint.log);
+      await this.Endpoint.updateAttribute(
+        ColorControl.id,
+        "colorMode",
+        ColorControl.ColorMode.ColorTemperatureMireds,
+        this.Endpoint.log,
+      );
+      await this.Endpoint.updateAttribute(
+        ColorControl.id,
+        "colorTemperatureMireds",
+        mireds,
+        this.Endpoint.log,
+      );
     }
   }
 
@@ -157,7 +226,7 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
   }
 
   static override typeNames(): string[] {
-    return ['rgbw'];
+    return ["rgbw"];
   }
 }
 

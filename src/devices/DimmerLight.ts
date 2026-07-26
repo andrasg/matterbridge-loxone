@@ -1,18 +1,24 @@
-import { bridgedNode, powerSource, dimmableLight, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { OnOff, LevelControl } from 'matterbridge/matter/clusters';
-import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';
-import { MatterLevelInfo } from '../data/MatterLevelInfo.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import {
+  bridgedNode,
+  powerSource,
+  dimmableLight,
+  type MatterbridgeEndpoint,
+  type CommandHandlerPayload,
+} from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { OnOff, LevelControl } from "matterbridge/matter/clusters";
+import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneLevelInfo } from "../data/LoxoneLevelInfo.js";
+import { MatterLevelInfo } from "../data/MatterLevelInfo.js";
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
 const StateNames = {
-  position: 'position',
+  position: "position",
 } as const;
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const StateNameKeys = Object.values(StateNames);
 
 class DimmerLight extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -23,8 +29,8 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
       platform,
       [dimmableLight, bridgedNode, powerSource],
       StateNameKeys,
-      'dimmable light',
-      `${DimmerLight.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
+      "dimmable light",
+      `${DimmerLight.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
     const latestValueEvent = this.getLatestValueEvent(StateNames.position);
     const value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
@@ -34,40 +40,48 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
       .createDefaultOnOffClusterServer(value.onOff)
       .createDefaultLevelControlClusterServer(value.matterLevel);
 
-    this.addLoxoneCommandHandler('on');
-    this.addLoxoneCommandHandler('off');
-    this.addLoxoneCommandHandler('moveToLevel', (data: CommandHandlerPayload<'moveToLevel'>) => {
+    this.addLoxoneCommandHandler("on");
+    this.addLoxoneCommandHandler("off");
+    this.addLoxoneCommandHandler("moveToLevel", (data: CommandHandlerPayload<"moveToLevel">) => {
       const value = MatterLevelInfo.fromMatterNumber(data.request.level);
       return value.loxoneLevel.toString();
     });
-    this.addLoxoneCommandHandler('moveToLevelWithOnOff', (data: CommandHandlerPayload<'moveToLevelWithOnOff'>) => {
-      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
-      return value.loxoneLevel.toString();
-    });
+    this.addLoxoneCommandHandler(
+      "moveToLevelWithOnOff",
+      (data: CommandHandlerPayload<"moveToLevelWithOnOff">) => {
+        const value = MatterLevelInfo.fromMatterNumber(data.request.level);
+        return value.loxoneLevel.toString();
+      },
+    );
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
     await this.updateAttributesFromLoxoneEvent(event);
   }
 
-  override async populateInitialState() {
+  override async populateInitialState(): Promise<void> {
     const latestValueEvent = this.getLatestValueEvent(StateNames.position);
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 
-  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent): Promise<void> {
     const targetLevel = LoxoneLevelInfo.fromLoxoneEvent(event);
-    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', targetLevel.onOff, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.id, "onOff", targetLevel.onOff, this.Endpoint.log);
 
     if (event.value !== 1) {
-      await this.Endpoint.updateAttribute(LevelControl.Cluster.id, 'currentLevel', targetLevel.matterLevel, this.Endpoint.log);
+      await this.Endpoint.updateAttribute(
+        LevelControl.id,
+        "currentLevel",
+        targetLevel.matterLevel,
+        this.Endpoint.log,
+      );
     }
   }
 
   static override typeNames(): string[] {
-    return ['dimmer'];
+    return ["dimmer"];
   }
 }
 

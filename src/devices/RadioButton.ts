@@ -1,16 +1,21 @@
-import { bridgedNode, powerSource, onOffSwitch, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { OnOff } from 'matterbridge/matter/clusters';
-import { AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import {
+  bridgedNode,
+  powerSource,
+  onOffLightSwitch,
+  type MatterbridgeEndpoint,
+} from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { OnOff } from "matterbridge/matter/clusters";
+import { type AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
 const StateNames = {
-  activeOutput: 'activeOutput',
+  activeOutput: "activeOutput",
 } as const;
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const StateNameKeys = Object.values(StateNames);
 
 class RadioButton extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -21,17 +26,22 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     super(
       control,
       platform,
-      [onOffSwitch, bridgedNode, powerSource],
+      [onOffLightSwitch, bridgedNode, powerSource],
       StateNameKeys,
-      'radio button',
-      `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}_${additionalConfig.outputId}`,
+      "radio button",
+      `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}_${additionalConfig.outputId}`,
     );
 
-    if (!additionalConfig || !additionalConfig.outputId || (isNaN(parseInt(additionalConfig.outputId)) && additionalConfig.outputId !== 'allOff')) {
+    if (
+      !additionalConfig?.outputId ||
+      (Number.isNaN(Number.parseInt(additionalConfig.outputId)) &&
+        additionalConfig.outputId !== "allOff")
+    ) {
       throw new Error(`LightMood device requires a valid outputId as additionalConfig.`);
     }
 
-    this.outputId = additionalConfig.outputId === 'allOff' ? 0 : parseInt(additionalConfig.outputId);
+    this.outputId =
+      additionalConfig.outputId === "allOff" ? 0 : Number.parseInt(additionalConfig.outputId);
     this.outputName = this.getOutputName();
 
     this.setNameSuffix(this.outputName);
@@ -39,12 +49,14 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
     const initialValue = latestActiveOutputEvent.value === this.outputId;
 
-    this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultOnOffClusterServer(initialValue);
+    this.Endpoint = this.createDefaultEndpoint()
+      .createDefaultGroupsClusterServer()
+      .createDefaultOnOffClusterServer(initialValue);
 
-    this.addLoxoneCommandHandler('on', () => {
-      return this.outputId === 0 ? 'reset' : `${this.outputId}`;
+    this.addLoxoneCommandHandler("on", () => {
+      return this.outputId === 0 ? "reset" : `${this.outputId}`;
     });
-    this.addLoxoneCommandHandler('off', () => {
+    this.addLoxoneCommandHandler("off", () => {
       return `reset`;
     });
   }
@@ -61,23 +73,28 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     }
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
-    this.updateAttributesFromLoxoneEvent(event);
+    await this.updateAttributesFromLoxoneEvent(event);
   }
 
-  override async populateInitialState() {
+  override async populateInitialState(): Promise<void> {
     const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
     await this.updateAttributesFromLoxoneEvent(latestActiveOutputEvent);
   }
 
-  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent) {
-    await this.Endpoint.updateAttribute(OnOff.Cluster.id, 'onOff', event.value === this.outputId, this.Endpoint.log);
+  private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent): Promise<void> {
+    await this.Endpoint.updateAttribute(
+      OnOff.id,
+      "onOff",
+      event.value === this.outputId,
+      this.Endpoint.log,
+    );
   }
 
   static override typeNames(): string[] {
-    return ['radio', 'radiobutton'];
+    return ["radio", "radiobutton"];
   }
 }
 

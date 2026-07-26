@@ -1,30 +1,45 @@
-import { contactSensor, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { BooleanState } from 'matterbridge/matter/clusters';
-import { ActiveOnlyStateNames, ActiveOnlyStateNamesType, ActiveOnlyStateNameKeys, SingleDataPointSensor } from './SingleDataPointSensor.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
-import { RegisterLoxoneDevice } from './LoxoneDevice.js';
-import * as Converters from '../utils/Converters.js';
+import { contactSensor, type MatterbridgeEndpoint } from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { BooleanState } from "matterbridge/matter/clusters";
+import {
+  ActiveOnlyStateNames,
+  type ActiveOnlyStateNamesType,
+  ActiveOnlyStateNameKeys,
+  SingleDataPointSensor,
+} from "./SingleDataPointSensor.js";
+import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
+import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { booleanValueConverter } from "../utils/Converters.js";
 
 class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
   constructor(control: Control, platform: LoxonePlatform) {
-    super(control, platform, ContactSensor.name, 'contact sensor', ActiveOnlyStateNameKeys[0], contactSensor, BooleanState.Cluster.id, 'stateValue');
+    super(
+      control,
+      platform,
+      ContactSensor.name,
+      "contact sensor",
+      ActiveOnlyStateNameKeys[0],
+      contactSensor,
+      BooleanState.id,
+      "stateValue",
+    );
 
     const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
     const initialValue = this.valueConverter(latestValueEvent);
 
-    this.Endpoint = this.createDefaultEndpoint().createDefaultBooleanStateClusterServer(initialValue);
+    this.Endpoint =
+      this.createDefaultEndpoint().createDefaultBooleanStateClusterServer(initialValue);
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): boolean {
-    return Converters.booleanValueConverter(event);
+    return booleanValueConverter(event);
   }
 
   static override typeNames(): string[] {
-    return ['contactsensor', 'contact'];
+    return ["contactsensor", "contact"];
   }
 }
 

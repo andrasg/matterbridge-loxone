@@ -1,7 +1,7 @@
-import { PlatformConfig, PlatformMatterbridge } from 'matterbridge';
-import { AnsiLogger } from 'matterbridge/logger';
-import { LoxonePlatform } from './LoxonePlatform.js';
-import { LoxonePlatformConfig } from './LoxonePlatformConfig.js';
+import type { PlatformMatterbridge } from "matterbridge";
+import type { AnsiLogger } from "matterbridge/logger";
+import { LoxonePlatform } from "./LoxonePlatform.js";
+import type { LoxonePlatformConfig } from "./LoxonePlatformConfig.js";
 
 /**
  * This is the standard interface for Matterbridge plugins.
@@ -12,9 +12,13 @@ import { LoxonePlatformConfig } from './LoxonePlatformConfig.js';
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {AnsiLogger} log - The logger instance.
- * @param {PlatformConfig} config - The platform configuration.
+ * @param {LoxonePlatformConfig} config - The platform configuration.
  * @returns {LoxonePlatform} The initialized Loxone platform.
  */
-export default function initializePlugin(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig): LoxonePlatform {
-  return new LoxonePlatform(matterbridge, log, config as LoxonePlatformConfig);
+export default function initializePlugin(
+  matterbridge: PlatformMatterbridge,
+  log: AnsiLogger,
+  config: LoxonePlatformConfig,
+): LoxonePlatform {
+  return new LoxonePlatform(matterbridge, log, config);
 }

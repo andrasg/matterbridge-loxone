@@ -1,16 +1,22 @@
-import { bridgedNode, powerSource, coverDevice, MatterbridgeEndpoint, CommandHandlerPayload } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { WindowCovering } from 'matterbridge/matter/clusters';
-import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import {
+  bridgedNode,
+  powerSource,
+  windowCovering,
+  type MatterbridgeEndpoint,
+  type CommandHandlerPayload,
+} from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { WindowCovering } from "matterbridge/matter/clusters";
+import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
 const StateNames = {
-  up: 'up',
-  down: 'down',
-  position: 'position',
-  targetPosition: 'targetPosition',
+  up: "up",
+  down: "down",
+  position: "position",
+  targetPosition: "targetPosition",
 } as const;
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
@@ -27,41 +33,46 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     super(
       control,
       platform,
-      [coverDevice, bridgedNode, powerSource],
+      [windowCovering, bridgedNode, powerSource],
       StateNameKeys,
-      'window covering',
-      `${WindowShade.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
+      "window covering",
+      `${WindowShade.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
     const latestValueEvent = this.getLatestValueEvent(StateNames.position);
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
-    this.Endpoint = this.createDefaultEndpoint().createDefaultWindowCoveringClusterServer(this.currentPosition);
+    this.Endpoint = this.createDefaultEndpoint().createDefaultWindowCoveringClusterServer(
+      this.currentPosition,
+    );
 
-    this.addLoxoneCommandHandler('stopMotion', () => {
-      return 'stop';
+    this.addLoxoneCommandHandler("stopMotion", () => {
+      return "stop";
     });
-    this.addLoxoneCommandHandler('downOrClose', () => {
-      return 'FullDown';
+    this.addLoxoneCommandHandler("downOrClose", () => {
+      return "FullDown";
     });
-    this.addLoxoneCommandHandler('upOrOpen', () => {
-      return 'FullUp';
+    this.addLoxoneCommandHandler("upOrOpen", () => {
+      return "FullUp";
     });
-    this.addLoxoneCommandHandler('goToLiftPercentage', (data: CommandHandlerPayload<'goToLiftPercentage'>) => {
-      const targetNumber = Math.round(data.request.liftPercent100thsValue / 100);
-      let loxoneCommand;
-      if (targetNumber < 1) {
-        loxoneCommand = 'FullUp';
-      } else if (targetNumber > 99) {
-        loxoneCommand = 'FullDown';
-      } else {
-        loxoneCommand = `manualPosition/${targetNumber}`;
-      }
-      return loxoneCommand;
-    });
+    this.addLoxoneCommandHandler(
+      "goToLiftPercentage",
+      (data: CommandHandlerPayload<"goToLiftPercentage">) => {
+        const targetNumber = Math.round(data.request.liftPercent100thsValue / 100);
+        let loxoneCommand;
+        if (targetNumber < 1) {
+          loxoneCommand = "FullUp";
+        } else if (targetNumber > 99) {
+          loxoneCommand = "FullDown";
+        } else {
+          loxoneCommand = `manualPosition/${targetNumber}`;
+        }
+        return loxoneCommand;
+      },
+    );
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
     switch (event.state?.name) {
@@ -78,23 +89,28 @@ class WindowShade extends LoxoneDevice<StateNameType> {
         this.handleTargetPositionUpdate(event);
         break;
       default:
-        this.Endpoint.log.warn(`Unhandled event: ${event.uuid}`);
+        this.Endpoint.log.warn(`Unhandled event: ${event.state?.name}`);
     }
   }
 
-  private handleTargetPositionUpdate(event: LoxoneValueEvent) {
+  private handleTargetPositionUpdate(event: LoxoneValueEvent): void {
     this.targetPosition = event.value * 10000;
     this.Endpoint.log.info(`Target position: ${this.targetPosition}`);
     // not updating Matter status, as it will be updated by the up/down event;
   }
 
-  private async handlePositionUpdate(event: LoxoneValueEvent) {
+  private async handlePositionUpdate(event: LoxoneValueEvent): Promise<void> {
     this.currentPosition = event.value * 10000;
     this.Endpoint.log.info(`Current position: ${this.currentPosition}`);
-    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(
+      WindowCovering.id,
+      "currentPositionLiftPercent100ths",
+      this.currentPosition,
+      this.Endpoint.log,
+    );
   }
 
-  private handleDownwardMovement(event: LoxoneValueEvent) {
+  private handleDownwardMovement(event: LoxoneValueEvent): void {
     if (event.value === 1) {
       this.Endpoint.log.info(`Moving up`);
       this.operationalStatus = WindowCovering.MovementStatus.Closing;
@@ -106,7 +122,7 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     }
   }
 
-  private async handleUpwardMovement(event: LoxoneValueEvent) {
+  private handleUpwardMovement(event: LoxoneValueEvent): void {
     if (event.value === 1) {
       this.Endpoint.log.info(`Moving up`);
       this.operationalStatus = WindowCovering.MovementStatus.Opening;
@@ -118,35 +134,56 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     }
   }
 
-  handleMovementActionWithDelay() {
+  handleMovementActionWithDelay(): void {
     if (this.updatePending) return;
 
     this.updatePending = true;
 
-    setTimeout(async () => {
-      this.Endpoint.log.info(`Updating operational status: ${this.operationalStatus}, target: ${this.targetPosition}`);
-
-      await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
-      await this.Endpoint.updateAttribute(
-        WindowCovering.Cluster.id,
-        'operationalStatus',
-        {
-          global: this.operationalStatus,
-          lift: this.operationalStatus,
-          tilt: this.operationalStatus,
-        },
-        this.Endpoint.log,
-      );
-      this.updatePending = false;
+    setTimeout(() => {
+      void this.updateMovementStatusWithDelay();
     }, 100);
   }
 
-  private async updateAttributesFromInternalState() {
-    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.currentPosition, this.Endpoint.log);
-    await this.Endpoint.updateAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', this.targetPosition, this.Endpoint.log);
+  private async updateMovementStatusWithDelay(): Promise<void> {
+    this.Endpoint.log.info(
+      `Updating operational status: ${this.operationalStatus}, target: ${this.targetPosition}`,
+    );
+
     await this.Endpoint.updateAttribute(
-      WindowCovering.Cluster.id,
-      'operationalStatus',
+      WindowCovering.id,
+      "targetPositionLiftPercent100ths",
+      this.targetPosition,
+      this.Endpoint.log,
+    );
+    await this.Endpoint.updateAttribute(
+      WindowCovering.id,
+      "operationalStatus",
+      {
+        global: this.operationalStatus,
+        lift: this.operationalStatus,
+        tilt: this.operationalStatus,
+      },
+      this.Endpoint.log,
+    );
+    this.updatePending = false;
+  }
+
+  private async updateAttributesFromInternalState(): Promise<void> {
+    await this.Endpoint.updateAttribute(
+      WindowCovering.id,
+      "currentPositionLiftPercent100ths",
+      this.currentPosition,
+      this.Endpoint.log,
+    );
+    await this.Endpoint.updateAttribute(
+      WindowCovering.id,
+      "targetPositionLiftPercent100ths",
+      this.targetPosition,
+      this.Endpoint.log,
+    );
+    await this.Endpoint.updateAttribute(
+      WindowCovering.id,
+      "operationalStatus",
       {
         global: this.operationalStatus,
         lift: this.operationalStatus,
@@ -156,7 +193,7 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     );
   }
 
-  override async populateInitialState() {
+  override async populateInitialState(): Promise<void> {
     const latestPositionValueEvent = this.getLatestValueEvent(StateNames.position);
     const latestTargetPositionValueEvent = this.getLatestValueEvent(StateNames.targetPosition);
     const latestUpValueEvent = this.getLatestValueEvent(StateNames.up);
@@ -175,11 +212,11 @@ class WindowShade extends LoxoneDevice<StateNameType> {
       this.operationalStatus = WindowCovering.MovementStatus.Stopped;
     }
 
-    this.updateAttributesFromInternalState();
+    await this.updateAttributesFromInternalState();
   }
 
   static override typeNames(): string[] {
-    return ['shade', 'windowshade', 'shading'];
+    return ["shade", "windowshade", "shading"];
   }
 }
 

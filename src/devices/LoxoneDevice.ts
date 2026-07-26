@@ -1,23 +1,34 @@
-import { CommandHandlerFunction, CommandHandlerPayload, CommandHandlerResponse, DeviceTypeDefinition, MatterbridgeEndpoint, MatterbridgeEndpointCommands } from 'matterbridge';
-import { AtLeastOne, ClusterId } from 'matterbridge/matter';
-import { PowerSource } from 'matterbridge/matter/clusters';
-import { createHash } from 'node:crypto';
-import { BatteryLevelInfo } from '../data/BatteryLevelInfo.js';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
-import State from 'loxone-ts-api/dist/Structure/State.js';
-import { LoxoneEvent } from 'loxone-ts-api/dist/LoxoneEvents/LoxoneEvent.js';
+import {
+  type CommandHandlerDataMap,
+  type CommandHandlerFunction,
+  type CommandHandlerPayload,
+  type CommandHandlerResponse,
+  type DeviceTypeDefinition,
+  MatterbridgeEndpoint,
+} from "matterbridge";
+import type { ActionContext, AtLeastOne, ClusterId } from "matterbridge/matter";
+import { PowerSource } from "matterbridge/matter/clusters";
+import { createHash } from "node:crypto";
+import { BatteryLevelInfo } from "../data/BatteryLevelInfo.js";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
+import type State from "loxone-ts-api/dist/Structure/State.js";
+import type { LoxoneEvent } from "loxone-ts-api/dist/LoxoneEvents/LoxoneEvent.js";
 
-export const BASE_STATE_NAMES = ['battery'] as const;
+export const BASE_STATE_NAMES = ["battery"] as const;
 export type BaseStateNameType = (typeof BASE_STATE_NAMES)[number];
 
 // interface for allowing maintenance of device registry
 // allow additional constructor arguments for device subclasses that require extra params
 export interface ILoxoneDevice {
   // allow additional constructor arguments for device subclasses that require extra params
-  new (control: Control, platform: LoxonePlatform, additionalConfig: AdditionalConfig): LoxoneDevice;
+  new (
+    control: Control,
+    platform: LoxonePlatform,
+    additionalConfig: AdditionalConfig,
+  ): LoxoneDevice;
   typeNames(): string[];
 }
 
@@ -60,8 +71,9 @@ abstract class LoxoneDevice<T extends string = string> {
     for (const stateName of stateNames) {
       const state = control.statesByName.get(stateName);
       if (!state) throw new Error(`Could not find state found for '${stateName}'`);
-      if (!state.latestEvent) throw new Error(`No latest event received for '${stateName}' (${state.uuid.stringValue})`);
-      this.statesByName.set(state.name as T, state);
+      if (!state.latestEvent)
+        throw new Error(`No latest event received for '${stateName}' (${state.uuid.stringValue})`);
+      this.statesByName.set(stateName, state);
     }
 
     this.roomname = control.room.name;
@@ -76,10 +88,15 @@ abstract class LoxoneDevice<T extends string = string> {
    * Registers the device with the Matterbridge platform.
    * This method is called by the LoxonePlatform when the device is created.
    */
-  public async registerWithPlatform() {
-    this.platform.setSelectDevice(this.Endpoint.serialNumber ?? '', this.Endpoint.deviceName ?? '', undefined, 'hub');
+  public async registerWithPlatform(): Promise<void> {
+    this.platform.setSelectDevice(
+      this.Endpoint.serialNumber ?? "",
+      this.Endpoint.deviceName ?? "",
+      undefined,
+      "hub",
+    );
 
-    if (this.platform.validateDevice(this.Endpoint.deviceName ?? '')) {
+    if (this.platform.validateDevice(this.Endpoint.deviceName ?? "")) {
       await this.platform.registerDevice(this.Endpoint);
     }
   }
@@ -100,24 +117,28 @@ abstract class LoxoneDevice<T extends string = string> {
    */
   public createDefaultEndpoint(): MatterbridgeEndpoint {
     // generate a deterministic serial number based on the unique storage key
-    const hash = createHash('sha256').update(this.uniqueStorageKey).digest('hex');
+    const hash = createHash("sha256").update(this.uniqueStorageKey).digest("hex");
     const serial = hash.substring(0, 16);
 
-    const endpoint = new MatterbridgeEndpoint(this.deviceTypeDefinitions, { id: this.uniqueStorageKey }, this.platform.config.debug as boolean)
+    const endpoint = new MatterbridgeEndpoint(
+      this.deviceTypeDefinitions,
+      { id: this.uniqueStorageKey },
+      this.platform.config.debug,
+    )
       .createDefaultIdentifyClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
         this.longname,
         serial,
         0xfff1,
-        'Matterbridge',
+        "Matterbridge",
         `Matterbridge ${this.typeName}`,
-        parseInt(this.platform.version.replace(/\D/g, '')),
-        this.platform.version === '' ? 'Unknown' : this.platform.version,
-        parseInt(this.platform.matterbridge.matterbridgeVersion.replace(/\D/g, '')),
+        Number.parseInt(this.platform.version.replace(/\D/g, "")),
+        this.platform.version === "" ? "Unknown" : this.platform.version,
+        Number.parseInt(this.platform.matterbridge.matterbridgeVersion.replace(/\D/g, "")),
         this.platform.matterbridge.matterbridgeVersion,
       );
 
-    endpoint.addCommandHandler('identify', async ({ request: { identifyTime } }) => {
+    endpoint.addCommandHandler("identify", ({ request: { identifyTime } }) => {
       this.platform.log.info(`Command identify called identifyTime: ${identifyTime}`);
     });
 
@@ -126,17 +147,19 @@ abstract class LoxoneDevice<T extends string = string> {
 
   /**
    * Adds a wired power attribute to the device.
-   * @param wiredCurrentType The type of wired power source. Default is AC.
+   * @param {PowerSource.WiredCurrentType} wiredCurrentType The type of wired power source. Default is AC.
    * @returns {LoxoneDevice} For chaining.
    */
-  public WithWiredPower(wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac): LoxoneDevice {
+  public WithWiredPower(
+    wiredCurrentType: PowerSource.WiredCurrentType = PowerSource.WiredCurrentType.Ac,
+  ): LoxoneDevice {
     this.Endpoint.createDefaultPowerSourceWiredClusterServer(wiredCurrentType);
     return this;
   }
 
   /**
    * Adds a replaceable battery attribute to the device. The battery UUID must be supplied.
-   * @param batteryUUID The UUID of the battery events.
+   * @param {string} batteryUUID The UUID of the battery events.
    * @returns {LoxoneDevice} For chaining.
    */
   public WithReplacableBattery(batteryUUID: string): LoxoneDevice {
@@ -144,16 +167,21 @@ abstract class LoxoneDevice<T extends string = string> {
 
     // find state
     const batteryState = this.platform.loxoneClient.states.get(batteryUUID);
-    if (!batteryState) throw new Error(`Could not find state found for batteryUUID '${batteryUUID}'`);
+    if (!batteryState)
+      throw new Error(`Could not find state found for batteryUUID '${batteryUUID}'`);
 
-    if (!batteryState.latestEvent) throw new Error(`No state received for batteryUUID '${batteryUUID}'`);
+    if (!batteryState.latestEvent)
+      throw new Error(`No state received for batteryUUID '${batteryUUID}'`);
 
     // start listening to battery events
-    this.statesByName.set('battery' as T, batteryState);
+    this.statesByName.set("battery", batteryState);
 
     // set the initial battery attribute
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(batteryState.latestEvent);
-    this.Endpoint.createDefaultPowerSourceReplaceableBatteryClusterServer(batteryLevelInfo.batteryRemaining, batteryLevelInfo.batteryStatus);
+    this.Endpoint.createDefaultPowerSourceReplaceableBatteryClusterServer(
+      batteryLevelInfo.batteryRemaining,
+      batteryLevelInfo.batteryStatus,
+    );
 
     // for chaining
     return this;
@@ -161,22 +189,24 @@ abstract class LoxoneDevice<T extends string = string> {
 
   /**
    * Registers a Loxone command handler for the event. The command will be sent to the Loxone API.
-   * @param event One of {@link MatterbridgeEndpointCommands}.
-   * @param loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link event} will be used as the Loxone command.
+   * @param {T} event One of {@link MatterbridgeEndpointCommands}.
+   * @param {} loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link event} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler<T extends keyof MatterbridgeEndpointCommands>(event: T, loxoneCommandFormatter?: (data: CommandHandlerPayload<T>) => string) {
+  public addLoxoneCommandHandler<T extends keyof CommandHandlerDataMap>(
+    event: T,
+    loxoneCommandFormatter?: (data: CommandHandlerPayload<T>) => string,
+  ): void {
     // if the formatter is not provided, use the event name as the command
-    if (loxoneCommandFormatter === undefined) {
-      loxoneCommandFormatter = () => {
-        return event;
-      };
-    }
+    const loxoneCommandFormatterInner = loxoneCommandFormatter ?? ((): string => event);
 
     // delegate for executing the loxone command
     const delegate: CommandHandlerFunction<T> = async (data: CommandHandlerPayload<T>) => {
-      const commandString = loxoneCommandFormatter?.(data);
+      const commandString = loxoneCommandFormatterInner(data);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-      await this.platform.loxoneClient.control(this.control.structureSection.uuidAction, commandString);
+      await this.platform.loxoneClient.control(
+        this.control.structureSection.uuidAction,
+        commandString,
+      );
       return undefined as CommandHandlerResponse<T>;
     };
 
@@ -186,29 +216,32 @@ abstract class LoxoneDevice<T extends string = string> {
 
   /**
    * Registers a Loxone atrtibute subscription. The command will be sent to the Loxone API.
-   * @param cluster The cluster where the attribute is located.
-   * @param attribite The name of the attribute to be subscribed to.
-   * @param loxoneCommandFormatter Optional function to generate the Loxone command.
+   * @param {ClusterId} cluster The cluster where the attribute is located.
+   * @param {string} attribute The name of the attribute to be subscribed to.
+   * @param {function} loxoneCommandFormatter Function to generate the Loxone command(s) from the new value, the old value and the action context. Return undefined to send nothing.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public addLoxoneAttributeSubscription(cluster: ClusterId, attribute: string, loxoneCommandFormatter: (newValue: any) => string | string[] | undefined) {
-    // prepare the loxone command
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-    const delegate = async (newValue: any, oldValue: any, context?: any) => {
-      let commandStrings = loxoneCommandFormatter(newValue);
+  public addLoxoneAttributeSubscription(
+    cluster: ClusterId,
+    attribute: string,
+    loxoneCommandFormatter: (
+      newValue: any,
+      oldValue: any,
+      context: ActionContext,
+    ) => string | string[] | undefined,
+  ): void {
+    // the subscription listener must be synchronous, so the Loxone commands are sent fire-and-forget
+    const delegate = (newValue: any, oldValue: any, context: ActionContext): void => {
+      const commandStrings = loxoneCommandFormatter(newValue, oldValue, context);
 
       if (commandStrings === undefined) {
         return;
       }
 
-      if (!Array.isArray(commandStrings)) {
-        commandStrings = [commandStrings];
-      }
-
-      for (const commandString of commandStrings) {
-        this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-        await this.platform.loxoneClient.control(this.control.uuidAction, commandString);
-      }
+      void this.sendLoxoneCommands(
+        Array.isArray(commandStrings) ? commandStrings : [commandStrings],
+      ).catch((error: unknown) => {
+        this.Endpoint.log.error(`Error calling Loxone API command: ${String(error)}`);
+      });
     };
 
     // register the attribute subscription
@@ -216,10 +249,22 @@ abstract class LoxoneDevice<T extends string = string> {
   }
 
   /**
-   * Handles the Loxone update event raised by the platform. Only used by the platform to send events to the Loxone devices.
-   * @param event The LoxoneUpdateEvent to handle.
+   * Sends the given commands sequentially to the Loxone API.
+   * @param {string[]} commandStrings The Loxone commands to send.
+   * @returns {Promise<void>} A promise that resolves when all commands have been sent.
    */
-  async handleUpdateEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  private async sendLoxoneCommands(commandStrings: string[]): Promise<void> {
+    for (const commandString of commandStrings) {
+      this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
+      await this.platform.loxoneClient.control(this.control.uuidAction, commandString);
+    }
+  }
+
+  /**
+   * Handles the Loxone update event raised by the platform. Only used by the platform to send events to the Loxone devices.
+   * @param {LoxoneValueEvent | LoxoneTextEvent} event The LoxoneUpdateEvent to handle.
+   */
+  async handleUpdateEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     // handle battery events
     if (event instanceof LoxoneValueEvent && event.uuid.stringValue === this.batteryUUID) {
       await this.handleBatteryEvent(event);
@@ -232,31 +277,43 @@ abstract class LoxoneDevice<T extends string = string> {
     await this.handleLoxoneDeviceEvent(event);
   }
 
-  protected setNameSuffix(nameSuffix: string) {
+  protected setNameSuffix(nameSuffix: string): void {
     this.longname += `/${nameSuffix}`;
   }
 
-  private async handleBatteryEvent(event: LoxoneEvent) {
+  private async handleBatteryEvent(event: LoxoneEvent): Promise<void> {
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
 
-    await this.Endpoint.updateAttribute(PowerSource.Cluster.id, 'batPercentRemaining', batteryLevelInfo.batteryRemaining, this.Endpoint.log);
-    await this.Endpoint.updateAttribute(PowerSource.Cluster.id, 'batChargeLevel', batteryLevelInfo.batteryStatus, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(
+      PowerSource.id,
+      "batPercentRemaining",
+      batteryLevelInfo.batteryRemaining,
+      this.Endpoint.log,
+    );
+    await this.Endpoint.updateAttribute(
+      PowerSource.id,
+      "batChargeLevel",
+      batteryLevelInfo.batteryStatus,
+      this.Endpoint.log,
+    );
   }
 
   protected getLatestValueEvent(stateName: T): LoxoneValueEvent {
     const state = this.statesByName.get(stateName);
     if (!state) throw new Error(`State with name '${stateName}' not found`);
     if (!state.latestEvent) throw new Error(`No latest event found for state '${stateName}'`);
-    if (!(state.latestEvent instanceof LoxoneValueEvent)) throw new Error(`Latest event for state ${stateName} is not a value event`);
-    return state.latestEvent as LoxoneValueEvent;
+    if (!(state.latestEvent instanceof LoxoneValueEvent))
+      throw new Error(`Latest event for state ${stateName} is not a value event`);
+    return state.latestEvent;
   }
 
   protected getLatestTextEvent(stateName: T): LoxoneTextEvent {
     const state = this.statesByName.get(stateName);
     if (!state) throw new Error(`State with name '${stateName}' not found`);
     if (!state.latestEvent) throw new Error(`No latest event found for state '${stateName}'`);
-    if (!(state.latestEvent instanceof LoxoneTextEvent)) throw new Error(`Latest event for state ${stateName} is not a text event`);
-    return state.latestEvent as LoxoneTextEvent;
+    if (!(state.latestEvent instanceof LoxoneTextEvent))
+      throw new Error(`Latest event for state ${stateName} is not a text event`);
+    return state.latestEvent;
   }
 
   /**
@@ -278,16 +335,11 @@ abstract class LoxoneDevice<T extends string = string> {
     return [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static nameExtractor(control: Control, platform: LoxonePlatform, additionalConfig: string): string | undefined {
-    return undefined;
-  }
-
-  public async restoreState() {
+  public async restoreState(): Promise<void> {
     if (this.batteryUUID !== undefined) {
       this.Endpoint.log.debug(`Restoring battery state`);
-      const batteryState = this.statesByName.get('battery' as T);
-      if (!batteryState || !batteryState.latestEvent) throw new Error(`Battery state cannot be restored`);
+      const batteryState = this.statesByName.get("battery");
+      if (!batteryState?.latestEvent) throw new Error(`Battery state cannot be restored`);
       await this.handleBatteryEvent(batteryState.latestEvent);
     }
     this.Endpoint.log.debug(`Restoring state`);

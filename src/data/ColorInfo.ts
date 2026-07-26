@@ -1,6 +1,6 @@
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 
-export type LoxoneColorKind = 'hsv' | 'temp';
+export type LoxoneColorKind = "hsv" | "temp";
 
 /**
  * Parses and converts the text value of a Loxone `ColorPickerV2` `color` state.
@@ -28,7 +28,7 @@ class ColorInfo {
 
     const hsvMatch = /^hsv\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(trimmed);
     if (hsvMatch) {
-      info.kind = 'hsv';
+      info.kind = "hsv";
       info.hue = Number(hsvMatch[1]);
       info.saturation = Number(hsvMatch[2]);
       info.brightness = Number(hsvMatch[3]);
@@ -37,7 +37,7 @@ class ColorInfo {
 
     const tempMatch = /^temp\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(trimmed);
     if (tempMatch) {
-      info.kind = 'temp';
+      info.kind = "temp";
       info.brightness = Number(tempMatch[1]);
       info.kelvin = Number(tempMatch[2]);
       return info;
@@ -51,33 +51,57 @@ class ColorInfo {
   }
 }
 
-/** Converts a Loxone hue (0-360) to a Matter hue (0-254). */
+/**
+ * Converts a Loxone hue (0-360) to a Matter hue (0-254).
+ * @param {number} hue The Loxone hue (0-360).
+ * @returns {number} The Matter hue (0-254).
+ */
 export function loxoneHueToMatter(hue: number): number {
   return clamp(Math.round((hue * 254) / 360), 0, 254);
 }
 
-/** Converts a Matter hue (0-254) to a Loxone hue (0-360). */
+/**
+ * Converts a Matter hue (0-254) to a Loxone hue (0-360).
+ * @param {number} hue The Matter hue (0-254).
+ * @returns {number} The Loxone hue (0-360).
+ */
 export function matterHueToLoxone(hue: number): number {
   return clamp(Math.round((hue * 360) / 254), 0, 360);
 }
 
-/** Converts a Loxone saturation (0-100) to a Matter saturation (0-254). */
+/**
+ * Converts a Loxone saturation (0-100) to a Matter saturation (0-254).
+ * @param {number} saturation The Loxone saturation (0-100).
+ * @returns {number} The Matter saturation (0-254).
+ */
 export function loxoneSaturationToMatter(saturation: number): number {
   return clamp(Math.round((saturation * 254) / 100), 0, 254);
 }
 
-/** Converts a Matter saturation (0-254) to a Loxone saturation (0-100). */
+/**
+ * Converts a Matter saturation (0-254) to a Loxone saturation (0-100).
+ * @param {number} saturation The Matter saturation (0-254).
+ * @returns {number} The Loxone saturation (0-100).
+ */
 export function matterSaturationToLoxone(saturation: number): number {
   return clamp(Math.round((saturation * 100) / 254), 0, 100);
 }
 
-/** Converts Kelvin to Matter color temperature in mireds. */
+/**
+ * Converts Kelvin to Matter color temperature in mireds.
+ * @param {number} kelvin The color temperature in Kelvin.
+ * @returns {number} The color temperature in mireds, or 0 if the input is not a positive finite number.
+ */
 export function kelvinToMireds(kelvin: number): number {
   if (!Number.isFinite(kelvin) || kelvin <= 0) return 0;
   return Math.round(1_000_000 / kelvin);
 }
 
-/** Converts Matter color temperature in mireds to Kelvin. */
+/**
+ * Converts Matter color temperature in mireds to Kelvin.
+ * @param {number} mireds The color temperature in mireds.
+ * @returns {number} The color temperature in Kelvin, or 0 if the input is not a positive finite number.
+ */
 export function miredsToKelvin(mireds: number): number {
   if (!Number.isFinite(mireds) || mireds <= 0) return 0;
   return Math.round(1_000_000 / mireds);
