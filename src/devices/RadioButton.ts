@@ -1,7 +1,7 @@
 import {
   bridgedNode,
   powerSource,
-  mountedOnOffControl,
+  onOffLightSwitch,
   type MatterbridgeEndpoint,
 } from "matterbridge";
 import type { LoxonePlatform } from "../LoxonePlatform.js";
@@ -26,7 +26,7 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     super(
       control,
       platform,
-      [mountedOnOffControl, bridgedNode, powerSource],
+      [onOffLightSwitch, bridgedNode, powerSource],
       StateNameKeys,
       "radio button",
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}_${additionalConfig.outputId}`,
