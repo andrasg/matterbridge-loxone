@@ -1,20 +1,20 @@
 name: Build and lint
 
 on:
-    push:
-        branches-ignore: ['main']
-        tags-ignore:
-            - 'v*'
-    pull_request:
-    repository_dispatch:
-        types: [matterbridge-updated, critical-dependency-updated]
-    workflow_dispatch:
-        inputs:
-            reason:
-                description: 'Reason for manual trigger'
-                required: false
-                default: 'Manual upstream check'
-    
+  push:
+    branches-ignore: ["main"]
+    tags-ignore:
+      - "v*"
+  pull_request:
+  repository_dispatch:
+    types: [matterbridge-updated, critical-dependency-updated]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual trigger"
+        required: false
+        default: "Manual upstream check"
+
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
@@ -37,12 +37,12 @@ jobs:
         run: |
           # Define critical dependencies that should trigger builds
           CRITICAL_DEPS=("matterbridge")
-          
+
           # Check if the dispatch includes dependency info
           if [[ "${{ github.event.client_payload.dependency }}" != "" ]]; then
             CHANGED_DEP="${{ github.event.client_payload.dependency }}"
             echo "Dependency changed: $CHANGED_DEP"
-            
+
             # Check if it's in our critical list
             for dep in "${CRITICAL_DEPS[@]}"; do
               if [[ "$CHANGED_DEP" == "$dep"* ]]; then
@@ -51,7 +51,7 @@ jobs:
                 exit 0
               fi
             done
-            
+
             echo "Non-critical dependency changed, skipping build"
             echo "SHOULD_BUILD=false" >> $GITHUB_ENV
             exit 1
@@ -63,28 +63,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Use Node.js ${{ matrix.node-version }} 
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
 
       - name: Clean cache
         run: npm cache clean --force
-    
+
       - name: Verify Node.js version
         run: node -v
 
       - name: Verify Npm version
         run: npm -v
-            
+
       - name: Install matterbridge
         run: npm install -g matterbridge --omit=dev
 
       - name: Install dependencies
         run: npm ci
-  
+
       - name: Link matterbridge
         run: npm link matterbridge
+
+      - name: Generate build info
+        run: npm run prebuild
 
       - name: Lint the project
         run: npm run lint
