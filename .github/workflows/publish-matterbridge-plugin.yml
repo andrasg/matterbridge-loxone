@@ -21,7 +21,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -29,9 +29,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org'
-            
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Resolve release metadata
         id: get_version
         run: |
@@ -64,9 +64,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-    
+
       - name: Link matterbridge
         run: npm link matterbridge
+
+      - name: Generate build info
+        run: npm run prebuild
 
       - name: Lint the project
         run: npm run lint
@@ -97,4 +100,3 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --tag ${{ steps.determine_dist_tag.outputs.dist_tag }}
-
