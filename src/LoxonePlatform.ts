@@ -177,7 +177,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
           this.log.debug(`Registered device type '${name}' -> ${ctor.name}`);
         }
       } catch (err: unknown) {
-        this.log.error(`Error registering device constructor ${ctor.name}: ${err}`);
+        this.log.error(`Error registering device constructor ${ctor.name}: ${String(err)}`);
       }
     }
     this.log.info(`Device registry created with ${this.deviceCtorByType.size} type entries.`);
@@ -194,7 +194,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       try {
         await this.createDevice(uuidAndType);
       } catch (error) {
-        this.log.error(`Error creating device for config '${uuidAndType}': ${error}`);
+        this.log.error(`Error creating device for config '${uuidAndType}': ${String(error)}`);
       }
     }
   }
@@ -329,7 +329,9 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       try {
         await device.handleUpdateEvent(event);
       } catch (error) {
-        this.log.error(`Error handling Loxone event for device ${device.longname}: ${error}`);
+        this.log.error(
+          `Error handling Loxone event for device ${device.longname}: ${String(error)}`,
+        );
       }
     }
   }
