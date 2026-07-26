@@ -1,14 +1,14 @@
-import { bridgedNode, MatterbridgeEndpoint, powerSource, smokeCoAlarm } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { SmokeCoAlarm } from 'matterbridge/matter/clusters';
-import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { bridgedNode, type MatterbridgeEndpoint, powerSource, smokeCoAlarm } from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { SmokeCoAlarm } from "matterbridge/matter/clusters";
+import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
 const StateNames = {
-  level: 'level',
-  alarmCause: 'alarmCause',
+  level: "level",
+  alarmCause: "alarmCause",
 } as const;
 type StateNameType = (typeof StateNames)[keyof typeof StateNames];
 const StateNameKeys = Object.values(StateNames) as StateNameType[];
@@ -24,10 +24,11 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
       platform,
       [smokeCoAlarm, bridgedNode, powerSource],
       StateNameKeys,
-      'smoke alarm',
-      `${SmokeAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
+      "smoke alarm",
+      `${SmokeAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
+    // oxlint-disable-next-line no-bitwise
     const supportsSmoke = control.structureSection.details.availableAlarms & 0x01;
     if (!supportsSmoke) throw new Error(`Control ${control.name} does not support smoke alarms.`);
 
@@ -39,16 +40,18 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
 
     const alarmState = this.calculateAlarmState();
 
-    this.Endpoint = this.createDefaultEndpoint().createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
+    this.Endpoint =
+      this.createDefaultEndpoint().createSmokeOnlySmokeCOAlarmClusterServer(alarmState);
   }
 
   private calculateAlarmState(): SmokeCoAlarm.AlarmState {
+    // oxlint-disable-next-line no-bitwise
     const isAlarm = (this.cause & 0x01) === 1 && this.level === 1;
     const alarmState = isAlarm ? SmokeCoAlarm.AlarmState.Critical : SmokeCoAlarm.AlarmState.Normal;
     return alarmState;
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
     switch (event.state?.name) {
@@ -58,12 +61,17 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
       case StateNames.alarmCause:
         this.cause = event.value;
         break;
+      default:
+        this.Endpoint.log.warn(
+          `Received unexpected event for state ${event.state?.name} on device ${this.longname}`,
+        );
+        return;
     }
 
     await this.updateAttributesFromInternalState();
   }
 
-  override async populateInitialState() {
+  override async populateInitialState(): Promise<void> {
     const latestCause = this.getLatestValueEvent(StateNames.alarmCause);
     const latestLevel = this.getLatestValueEvent(StateNames.level);
 
@@ -73,13 +81,18 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
     await this.updateAttributesFromInternalState();
   }
 
-  private async updateAttributesFromInternalState() {
+  private async updateAttributesFromInternalState(): Promise<void> {
     const alarmState = this.calculateAlarmState();
-    await this.Endpoint.updateAttribute(SmokeCoAlarm.Cluster.id, 'smokeState', alarmState, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(
+      SmokeCoAlarm.id,
+      "smokeState",
+      alarmState,
+      this.Endpoint.log,
+    );
   }
 
   static override typeNames(): string[] {
-    return ['smoke', 'smokesensor'];
+    return ["smoke", "smokesensor"];
   }
 }
 

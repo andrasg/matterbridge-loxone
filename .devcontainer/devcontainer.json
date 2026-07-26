@@ -3,30 +3,102 @@
 {
 	"name": "Node.js & TypeScript",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node",
-
+	"image": "mcr.microsoft.com/devcontainers/javascript-node",
 	"runArgs": [
 		"--network=matterbridge_homekit",
 		"--ip=192.168.20.53"
 	],
-
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
-
 	"mounts": [
 		// Mount the local directory to /workspaces in the container.
 		"source=${localWorkspaceFolder}/.matterbridge/,target=/home/node/.matterbridge/,type=bind,consistency=cached"
 	],
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	//"forwardPorts": [ 8283, 5540 ],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo npm install matterbridge -g && npm install && npm run matterbridge:add && sudo npm link matterbridge && npm link",
-
+	"postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+	"postStartCommand": "bash .devcontainer/postStartCommand.sh",
 	// Configure tool-specific properties.
-	// "customizations": {},
-
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"typescriptteam.native-preview",
+				"oxc.oxc-vscode"
+			],
+			"settings": {
+				"oxc.enable": true,
+				"js/ts.experimental.useTsgo": true,
+				"js/ts.tsdk.promptToUseWorkspaceVersion": false,
+				"editor.tabSize": 2,
+				"editor.rulers": [
+					180
+				],
+				"editor.formatOnSave": false,
+				"editor.defaultFormatter": "oxc.oxc-vscode",
+				"[javascript]": {
+					"editor.defaultFormatter": "oxc.oxc-vscode"
+				},
+				"[typescript]": {
+					"editor.defaultFormatter": "oxc.oxc-vscode"
+				},
+				"[json]": {
+					"editor.defaultFormatter": "oxc.oxc-vscode"
+				},
+				"[jsonc]": {
+					"editor.defaultFormatter": "oxc.oxc-vscode"
+				},
+				"[markdown]": {
+					"editor.defaultFormatter": "oxc.oxc-vscode"
+				},
+				"editor.formatOnSaveMode": "file",
+				"editor.codeActionsOnSave": {
+					"source.format.oxc": "always",
+					"source.fixAll.oxc": "always"
+				},
+				"diffEditor.ignoreTrimWhitespace": false,
+				"files.eol": "\n",
+				"files.insertFinalNewline": true,
+				"files.trimFinalNewlines": true,
+				"files.trimTrailingWhitespace": true,
+				"files.watcherExclude": {
+					"**/build/**": true,
+					"**/.cache/**": true,
+					"**/coverage/**": true
+				},
+				"search.exclude": {
+					"**/node_modules": true,
+					"**/dist": true,
+					"**/build": true,
+					"**/.cache": true,
+					"**/coverage": true
+				},
+				"git.autofetch": true,
+				"git.autoRepositoryDetection": false,
+				// VS Code's Copilot Chat extension settings
+				"chat.useCustomizationsInParentRepositories": false,
+				"chat.instructionsFilesLocations": {
+					".github/instructions": true,
+					"~/.copilot/instructions": false
+				},
+				// Dev Container specific settings
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"js/ts.tsserver.watchOptions": {
+					"watchFile": "dynamicPriorityPolling",
+					"watchDirectory": "dynamicPriorityPolling",
+					"fallbackPolling": "dynamicPriorityPolling",
+					"excludeDirectories": [
+						"**/.cache/**",
+						"**/node_modules/**",
+						"**/coverage/**",
+						"**/dist/**",
+						"**/build/**",
+						"**/docs/**"
+					]
+				}
+			}
+		}
+	},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	"remoteUser": "node"
 }

@@ -1,10 +1,10 @@
-import { bridgedNode, powerSource, genericSwitch, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { LoxoneDevice, RegisterLoxoneDevice } from './LoxoneDevice.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
-import { ActiveOnlyStateNameKeys, ActiveOnlyStateNamesType } from './SingleDataPointSensor.js';
+import { bridgedNode, powerSource, genericSwitch, type MatterbridgeEndpoint } from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
+import { ActiveOnlyStateNameKeys, type ActiveOnlyStateNamesType } from "./SingleDataPointSensor.js";
 
 class PushButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -15,27 +15,32 @@ class PushButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
       platform,
       [genericSwitch, bridgedNode, powerSource],
       ActiveOnlyStateNameKeys,
-      'button',
-      `${genericSwitch.name}_${control.structureSection.uuidAction.replace(/-/g, '_')}`,
+      "button",
+      `${genericSwitch.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
-    this.Endpoint = this.createDefaultEndpoint().createDefaultGroupsClusterServer().createDefaultSwitchClusterServer();
+    this.Endpoint = this.createDefaultEndpoint()
+      .createDefaultGroupsClusterServer()
+      .createDefaultSwitchClusterServer();
   }
 
-  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent) {
+  override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
     if (event.value === 1) {
-      await this.Endpoint.triggerSwitchEvent('Single', this.Endpoint.log);
+      await this.Endpoint.triggerSwitchEvent("Single", this.Endpoint.log);
     }
   }
 
-  override async populateInitialState() {
-    this.Endpoint.log.info(`PushButton ${this.longname} does not have an initial state to populate.`);
+  // oxlint-disable-next-line typescript/require-await
+  override async populateInitialState(): Promise<void> {
+    this.Endpoint.log.info(
+      `PushButton ${this.longname} does not have an initial state to populate.`,
+    );
   }
 
   static override typeNames(): string[] {
-    return ['pushbutton'];
+    return ["pushbutton"];
   }
 }
 

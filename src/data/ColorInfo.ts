@@ -1,6 +1,6 @@
-import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 
-export type LoxoneColorKind = 'hsv' | 'temp';
+export type LoxoneColorKind = "hsv" | "temp";
 
 /**
  * Parses and converts the text value of a Loxone `ColorPickerV2` `color` state.
@@ -28,7 +28,7 @@ class ColorInfo {
 
     const hsvMatch = /^hsv\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(trimmed);
     if (hsvMatch) {
-      info.kind = 'hsv';
+      info.kind = "hsv";
       info.hue = Number(hsvMatch[1]);
       info.saturation = Number(hsvMatch[2]);
       info.brightness = Number(hsvMatch[3]);
@@ -37,7 +37,7 @@ class ColorInfo {
 
     const tempMatch = /^temp\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(trimmed);
     if (tempMatch) {
-      info.kind = 'temp';
+      info.kind = "temp";
       info.brightness = Number(tempMatch[1]);
       info.kelvin = Number(tempMatch[2]);
       return info;

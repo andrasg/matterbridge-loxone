@@ -1,21 +1,36 @@
-import { lightSensor, MatterbridgeEndpoint } from 'matterbridge';
-import { LoxonePlatform } from '../LoxonePlatform.js';
-import { IlluminanceMeasurement } from 'matterbridge/matter/clusters';
-import { SingleDataPointSensor, ValueOnlyStateNameKeys, ValueOnlyStateNames, ValueOnlyStateNamesType } from './SingleDataPointSensor.js';
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
-import Control from 'loxone-ts-api/dist/Structure/Control.js';
-import { RegisterLoxoneDevice } from './LoxoneDevice.js';
+import { lightSensor, type MatterbridgeEndpoint } from "matterbridge";
+import type { LoxonePlatform } from "../LoxonePlatform.js";
+import { IlluminanceMeasurement } from "matterbridge/matter/clusters";
+import {
+  SingleDataPointSensor,
+  ValueOnlyStateNameKeys,
+  ValueOnlyStateNames,
+  type ValueOnlyStateNamesType,
+} from "./SingleDataPointSensor.js";
+import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
+import type Control from "loxone-ts-api/dist/Structure/Control.js";
+import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
 
 class LightSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
   constructor(control: Control, platform: LoxonePlatform) {
-    super(control, platform, LightSensor.name, 'light sensor', ValueOnlyStateNameKeys[0], lightSensor, IlluminanceMeasurement.Cluster.id, 'measuredValue');
+    super(
+      control,
+      platform,
+      LightSensor.name,
+      "light sensor",
+      ValueOnlyStateNameKeys[0],
+      lightSensor,
+      IlluminanceMeasurement.id,
+      "measuredValue",
+    );
 
     const latestValueEvent = this.getLatestValueEvent(ValueOnlyStateNames.value);
     const initialValue = this.valueConverter(latestValueEvent);
 
-    this.Endpoint = this.createDefaultEndpoint().createDefaultIlluminanceMeasurementClusterServer(initialValue);
+    this.Endpoint =
+      this.createDefaultEndpoint().createDefaultIlluminanceMeasurementClusterServer(initialValue);
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): number {
@@ -25,7 +40,7 @@ class LightSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   }
 
   static override typeNames(): string[] {
-    return ['lightsensor'];
+    return ["lightsensor"];
   }
 }
 

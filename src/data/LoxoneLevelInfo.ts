@@ -1,4 +1,4 @@
-import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 
 class LoxoneLevelInfo {
   loxoneLevel = 0;
@@ -9,16 +9,16 @@ class LoxoneLevelInfo {
     this.calculateLevel(event);
   }
 
-  static fromLoxoneEvent(event: LoxoneValueEvent | undefined) {
+  static fromLoxoneEvent(event: LoxoneValueEvent | undefined): LoxoneLevelInfo {
     return new LoxoneLevelInfo(event);
   }
 
-  private calculateLevel(event: LoxoneValueEvent | number | undefined) {
+  private calculateLevel(event: LoxoneValueEvent | number | undefined): void {
     if (event === undefined) return;
 
     if (event instanceof LoxoneValueEvent) {
       this.loxoneLevel = event.value;
-    } else if (typeof event === 'number') {
+    } else if (typeof event === "number") {
       this.loxoneLevel = event;
     }
 
