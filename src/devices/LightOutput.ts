@@ -23,6 +23,7 @@ export function createLightOutputDevice(
 ): LoxoneDevice {
   switch (control.type) {
     case "ColorPickerV2": {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const pickerType = control.structureSection?.details?.pickerType as string | undefined;
       switch (pickerType) {
         case "TunableWhite":

@@ -12,7 +12,11 @@ import {
 } from "matterbridge/matter/clusters";
 import type { LoxonePlatform } from "../LoxonePlatform.js";
 import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
-import * as Converters from "../utils/Converters.js";
+import {
+  onOffValueConverter,
+  numberValueConverter,
+  systemModeValueConverter,
+} from "../utils/Converters.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
@@ -42,12 +46,12 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
     );
 
     const latestStateValueEvent = this.getLatestValueEvent(StateNames.status);
-    const state = Converters.onOffValueConverter(latestStateValueEvent);
+    const state = onOffValueConverter(latestStateValueEvent);
     const latestTargetTemperatureValueEvent = this.getLatestValueEvent(
       StateNames.targetTemperature,
     );
     const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(StateNames.temperature);
-    const currentTemperature = Converters.numberValueConverter(latestCurrentTemperatureValueEvent);
+    const currentTemperature = numberValueConverter(latestCurrentTemperatureValueEvent);
 
     this.Endpoint = this.createDefaultEndpoint()
       .createDefaultGroupsClusterServer()
@@ -136,12 +140,12 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent): Promise<void> {
     switch (event.state?.name) {
       case StateNames.status: {
-        const state = Converters.onOffValueConverter(event);
+        const state = onOffValueConverter(event);
         await this.Endpoint.updateAttribute(OnOff.id, "onOff", state, this.Endpoint.log);
         break;
       }
       case StateNames.targetTemperature: {
-        const targetTemperature = Converters.numberValueConverter(event);
+        const targetTemperature = numberValueConverter(event);
         await this.Endpoint.updateAttribute(
           Thermostat.id,
           "occupiedCoolingSetpoint",
@@ -157,7 +161,7 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
         break;
       }
       case StateNames.temperature: {
-        const temperature = Converters.numberValueConverter(event);
+        const temperature = numberValueConverter(event);
         await this.Endpoint.updateAttribute(
           TemperatureMeasurement.id,
           "measuredValue",
@@ -173,7 +177,7 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
         break;
       }
       case StateNames.mode: {
-        const mode = Converters.systemModeValueConverter(event);
+        const mode = systemModeValueConverter(event);
         await this.Endpoint.updateAttribute(Thermostat.id, "systemMode", mode, this.Endpoint.log);
         break;
       }

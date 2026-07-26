@@ -1,4 +1,9 @@
-import { bridgedNode, powerSource, onOffSwitch, type MatterbridgeEndpoint } from "matterbridge";
+import {
+  bridgedNode,
+  powerSource,
+  mountedOnOffControl,
+  type MatterbridgeEndpoint,
+} from "matterbridge";
 import type { LoxonePlatform } from "../LoxonePlatform.js";
 import { OnOff } from "matterbridge/matter/clusters";
 import { type AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
@@ -21,7 +26,7 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     super(
       control,
       platform,
-      [onOffSwitch, bridgedNode, powerSource],
+      [mountedOnOffControl, bridgedNode, powerSource],
       StateNameKeys,
       "radio button",
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}_${additionalConfig.outputId}`,
@@ -29,7 +34,8 @@ class RadioButton extends LoxoneDevice<StateNameType> {
 
     if (
       !additionalConfig?.outputId ||
-      (Number.isNaN(Number.parseInt(additionalConfig.outputId)) && additionalConfig.outputId !== "allOff")
+      (Number.isNaN(Number.parseInt(additionalConfig.outputId)) &&
+        additionalConfig.outputId !== "allOff")
     ) {
       throw new Error(`LightMood device requires a valid outputId as additionalConfig.`);
     }

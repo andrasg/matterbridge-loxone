@@ -10,7 +10,7 @@ import {
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
-import * as Converters from "../utils/Converters.js";
+import { numberValueConverter } from "../utils/Converters.js";
 
 class TemperatureSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -34,7 +34,7 @@ class TemperatureSensor extends SingleDataPointSensor<ValueOnlyStateNamesType> {
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): number {
-    return Converters.numberValueConverter(event);
+    return numberValueConverter(event);
   }
 
   static override typeNames(): string[] {

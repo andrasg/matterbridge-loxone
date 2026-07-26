@@ -1,12 +1,12 @@
 import {
+  type CommandHandlerDataMap,
   type CommandHandlerFunction,
   type CommandHandlerPayload,
   type CommandHandlerResponse,
   type DeviceTypeDefinition,
   MatterbridgeEndpoint,
-  type MatterbridgeEndpointCommands,
 } from "matterbridge";
-import type { AtLeastOne, ClusterId } from "matterbridge/matter";
+import type { ActionContext, AtLeastOne, ClusterId } from "matterbridge/matter";
 import { PowerSource } from "matterbridge/matter/clusters";
 import { createHash } from "node:crypto";
 import { BatteryLevelInfo } from "../data/BatteryLevelInfo.js";
@@ -174,7 +174,7 @@ abstract class LoxoneDevice<T extends string = string> {
       throw new Error(`No state received for batteryUUID '${batteryUUID}'`);
 
     // start listening to battery events
-    this.statesByName.set("battery" as BaseStateNameType, batteryState);
+    this.statesByName.set("battery", batteryState);
 
     // set the initial battery attribute
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(batteryState.latestEvent);
@@ -192,7 +192,7 @@ abstract class LoxoneDevice<T extends string = string> {
    * @param {T} event One of {@link MatterbridgeEndpointCommands}.
    * @param {} loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link event} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler<T extends keyof MatterbridgeEndpointCommands>(
+  public addLoxoneCommandHandler<T extends keyof CommandHandlerDataMap>(
     event: T,
     loxoneCommandFormatter?: (data: CommandHandlerPayload<T>) => string,
   ): void {
@@ -216,32 +216,32 @@ abstract class LoxoneDevice<T extends string = string> {
 
   /**
    * Registers a Loxone atrtibute subscription. The command will be sent to the Loxone API.
-   * @param {CluserId} cluster The cluster where the attribute is located.
+   * @param {ClusterId} cluster The cluster where the attribute is located.
    * @param {string} attribute The name of the attribute to be subscribed to.
-   * @param {function} loxoneCommandFormatter Optional function to generate the Loxone command.
+   * @param {function} loxoneCommandFormatter Function to generate the Loxone command(s) from the new value, the old value and the action context. Return undefined to send nothing.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public addLoxoneAttributeSubscription(
     cluster: ClusterId,
     attribute: string,
-    loxoneCommandFormatter: (newValue: any) => string | string[] | undefined,
+    loxoneCommandFormatter: (
+      newValue: any,
+      oldValue: any,
+      context: ActionContext,
+    ) => string | string[] | undefined,
   ): void {
-    // prepare the loxone command
-    const delegate = async (newValue: any, oldValue: any, context?: any) => {
-      let commandStrings = loxoneCommandFormatter(newValue);
+    // the subscription listener must be synchronous, so the Loxone commands are sent fire-and-forget
+    const delegate = (newValue: any, oldValue: any, context: ActionContext): void => {
+      const commandStrings = loxoneCommandFormatter(newValue, oldValue, context);
 
       if (commandStrings === undefined) {
         return;
       }
 
-      if (!Array.isArray(commandStrings)) {
-        commandStrings = [commandStrings];
-      }
-
-      for (const commandString of commandStrings) {
-        this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-        await this.platform.loxoneClient.control(this.control.uuidAction, commandString);
-      }
+      void this.sendLoxoneCommands(
+        Array.isArray(commandStrings) ? commandStrings : [commandStrings],
+      ).catch((error: unknown) => {
+        this.Endpoint.log.error(`Error calling Loxone API command: ${String(error)}`);
+      });
     };
 
     // register the attribute subscription
@@ -249,8 +249,20 @@ abstract class LoxoneDevice<T extends string = string> {
   }
 
   /**
+   * Sends the given commands sequentially to the Loxone API.
+   * @param {string[]} commandStrings The Loxone commands to send.
+   * @returns {Promise<void>} A promise that resolves when all commands have been sent.
+   */
+  private async sendLoxoneCommands(commandStrings: string[]): Promise<void> {
+    for (const commandString of commandStrings) {
+      this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
+      await this.platform.loxoneClient.control(this.control.uuidAction, commandString);
+    }
+  }
+
+  /**
    * Handles the Loxone update event raised by the platform. Only used by the platform to send events to the Loxone devices.
-   * @param event The LoxoneUpdateEvent to handle.
+   * @param {LoxoneValueEvent | LoxoneTextEvent} event The LoxoneUpdateEvent to handle.
    */
   async handleUpdateEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     // handle battery events
@@ -326,7 +338,7 @@ abstract class LoxoneDevice<T extends string = string> {
   public async restoreState(): Promise<void> {
     if (this.batteryUUID !== undefined) {
       this.Endpoint.log.debug(`Restoring battery state`);
-      const batteryState = this.statesByName.get("battery" as BaseStateNameType);
+      const batteryState = this.statesByName.get("battery");
       if (!batteryState?.latestEvent) throw new Error(`Battery state cannot be restored`);
       await this.handleBatteryEvent(batteryState.latestEvent);
     }

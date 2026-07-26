@@ -1,7 +1,7 @@
 import {
   bridgedNode,
   powerSource,
-  coverDevice,
+  windowCovering,
   type MatterbridgeEndpoint,
   type CommandHandlerPayload,
 } from "matterbridge";
@@ -33,7 +33,7 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     super(
       control,
       platform,
-      [coverDevice, bridgedNode, powerSource],
+      [windowCovering, bridgedNode, powerSource],
       StateNameKeys,
       "window covering",
       `${WindowShade.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,

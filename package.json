@@ -1,6 +1,6 @@
 {
   "name": "matterbridge-loxone",
-  "version": "2.0.13",
+  "version": "2.1.0",
   "description": "Loxone Matterbridge plugin",
   "keywords": [
     "loxone",
@@ -28,14 +28,14 @@
     "link": "npm link --no-fund --no-audit matterbridge",
     "unlink": "npm unlink matterbridge",
     "prebuild": "node scripts/genGitInfo.cjs",
-    "build": "tsgo --project tsconfig.build.json",
+    "build": "tsc --build tsconfig.build.json",
     "buildProduction": "tsc --project tsconfig.build.production.json",
     "clean": "node scripts/clean.mjs",
     "cleanBuild": "npm run clean && npm run build",
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
     "deepClean": "node scripts/deep-clean.mjs",
-    "watch": "tsgo --project tsconfig.build.json --watch",
-    "typecheck": "tsgo --project tsconfig.json --noEmit",
+    "watch": "tsc --build tsconfig.build.json --watch",
+    "typecheck": "tsc --build tsconfig.json --noEmit",
     "lint": "oxlint --disable-nested-config",
     "lint:fix": "oxlint --disable-nested-config --fix",
     "format": "oxfmt",
@@ -49,12 +49,11 @@
     "node-persist-manager": "^2.0.2"
   },
   "devDependencies": {
-    "@types/node": "26.0.1",
-    "@typescript/native-preview": "7.0.0-dev.20260628.1",
-    "oxfmt": "0.56.0",
-    "oxlint": "1.71.0",
-    "oxlint-tsgolint": "0.23.0",
-    "typescript": "6.0.3"
+    "@types/node": "26.1.1",
+    "oxfmt": "0.60.0",
+    "oxlint": "1.75.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"

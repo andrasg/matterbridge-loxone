@@ -1,7 +1,7 @@
 import {
   bridgedNode,
   powerSource,
-  mountedOnOffControl,
+  onOffLightSwitch,
   type MatterbridgeEndpoint,
 } from "matterbridge";
 import type { LoxonePlatform } from "../LoxonePlatform.js";
@@ -23,7 +23,7 @@ class OnOffButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
     super(
       control,
       platform,
-      [mountedOnOffControl, bridgedNode, powerSource],
+      [onOffLightSwitch, bridgedNode, powerSource],
       ActiveOnlyStateNameKeys,
       "button",
       `${OnOffButton.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
@@ -37,8 +37,13 @@ class OnOffButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
       .createDefaultOnOffClusterServer(initialValue);
 
     this.addLoxoneCommandHandler("on", () => {
-      setTimeout(async () => {
-        await this.Endpoint.updateAttribute(OnOff.id, "onOff", false, this.Endpoint.log);
+      // the timer callback must be synchronous, so the attribute update is sent fire-and-forget
+      setTimeout(() => {
+        void this.Endpoint.updateAttribute(OnOff.id, "onOff", false, this.Endpoint.log).catch(
+          (error: unknown) => {
+            this.Endpoint.log.error(`Error resetting the onOff attribute: ${String(error)}`);
+          },
+        );
       }, 1000);
       return "pulse";
     });

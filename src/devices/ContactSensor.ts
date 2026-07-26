@@ -10,7 +10,7 @@ import {
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
-import * as Converters from "../utils/Converters.js";
+import { booleanValueConverter } from "../utils/Converters.js";
 
 class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -23,7 +23,7 @@ class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
       "contact sensor",
       ActiveOnlyStateNameKeys[0],
       contactSensor,
-      BooleanState.Cluster.id,
+      BooleanState.id,
       "stateValue",
     );
 
@@ -35,7 +35,7 @@ class ContactSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   }
 
   override valueConverter(event: LoxoneValueEvent | undefined): boolean {
-    return Converters.booleanValueConverter(event);
+    return booleanValueConverter(event);
   }
 
   static override typeNames(): string[] {
