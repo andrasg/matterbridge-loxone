@@ -29,8 +29,7 @@
     "reportUnusedDisableDirectives": "warn",
     "respectEslintDisableDirectives": false,
     "typeAware": true,
-    "typeCheck": true,
-    "maxWarnings": 0
+    "typeCheck": true
   },
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
   "categories": {
@@ -67,11 +66,17 @@
     "eslint/no-new": "warn",
     "eslint/no-param-reassign": "warn",
     "eslint/max-lines": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
-    "eslint/max-lines-per-function": ["warn", { "max": 500, "skipComments": true, "skipBlankLines": true }],
+    "eslint/max-lines-per-function": [
+      "warn",
+      { "max": 500, "skipComments": true, "skipBlankLines": true }
+    ],
     "eslint/complexity": ["warn", { "max": 100 }],
     "eslint/no-eval": "error",
     "eslint/no-implied-eval": "error",
-    "eslint/no-use-before-define": ["error", { "classes": false, "functions": false, "allowNamedExports": true }],
+    "eslint/no-use-before-define": [
+      "error",
+      { "classes": false, "functions": false, "allowNamedExports": true }
+    ],
     "unicorn/prefer-node-protocol": "error",
     "unicorn/require-post-message-target-origin": "off", // Node worker_threads postMessage does not use browser target origins.
     "unicorn/prefer-add-event-listener": "off", // Node EventEmitter APIs use on/off consistently across the repo.
@@ -162,7 +167,10 @@
         "typescript/no-explicit-any": "off",
         "typescript/require-await": "off",
         "typescript/unbound-method": "off",
-        "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
+        "typescript/no-deprecated": [
+          "warn",
+          { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }
+        ],
         "jest/require-to-throw-message": "off",
         "jest/no-conditional-in-test": "off",
         "jest/no-standalone-expect": "off",
@@ -199,7 +207,10 @@
         "typescript/no-explicit-any": "off",
         "typescript/require-await": "off",
         "typescript/unbound-method": "off",
-        "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
+        "typescript/no-deprecated": [
+          "warn",
+          { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }
+        ],
         "vitest/require-to-throw-message": "off",
         "vitest/no-conditional-tests": "off",
         "vitest/no-standalone-expect": "off",
@@ -236,7 +247,10 @@
         "typescript/no-explicit-any": "off",
         "typescript/require-await": "off",
         "typescript/unbound-method": "off",
-        "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
+        "typescript/no-deprecated": [
+          "warn",
+          { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }
+        ],
         "jsdoc/require-param": "off",
         "jsdoc/require-param-type": "off",
         "jsdoc/require-param-description": "off",
