@@ -10,7 +10,6 @@
 [![power by](https://img.shields.io/badge/powered%20by-node--persist--manager-blue)](https://www.npmjs.com/package/node-persist-manager)
 [![power by](https://img.shields.io/badge/powered%20by-node--lox--ws--api-blue)](https://www.npmjs.com/package/node-lox-ws-api)
 
-
 A [matterbridge](https://github.com/Luligu/matterbridge) plugin allowing connecting Loxone devices to Matter. The plugin was mostly tested against Apple Home but should work wirh any Matter-compatible ecosystems.
 
 As the plugin uses Loxone websocket connection, it can be used with all generations of Loxone Miniserver, including Gen.1.
@@ -18,6 +17,7 @@ As the plugin uses Loxone websocket connection, it can be used with all generati
 ## Supported devices
 
 This plugin supports the following Loxone device types
+
 - Lightcontroller
   - on/off light
   - dimmable light
@@ -41,6 +41,7 @@ Install this plugin using the matterbridge web UI by typing `matterbridge-loxone
 ## Configuration
 
 The plugin needs to be configured before use with the following values:
+
 - host - the IP address of the Loxone Miniserver
 - port - the port of the web interface on Loxone
 - username - the username to use for connecting
@@ -60,28 +61,29 @@ The UUID and type mapping needs to be supplied in the format of:
 `<UUID>,<type>,<comma_separated_optionalsettings_key_value_pairs>`
 
 The plugin supports the following types
-|type string|mapped Matter device type|mapped Loxone device|additional aparameters|notes|
-|--|--|--|--|--|
-|contactsensor|contact sensor|any `InfoOnlyDigital` device (0/1 values)|none|
-|humidity|humidity sensor|any `InfoOnlyAnalog` device (numeric values)|none|
-|temperature|temperature sensor|any `InfoOnlyAnalog` device (numeric values)|none|
-|pressure|pressure sensor|any `InfoOnlyAnalog` device (numeric values)|none|
-|waterleak|water leak sensor|any `InfoOnlyDigital` device (0/1 values)|none|
-|motion|occupancy sensor|any `InfoOnlyDigital` device (0/1 values)|none|
-|switch|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|button|onOffSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|switches automatically back to off after 1 second|
-|pushbutton|genericSwitch|any `Pushbutton` or `Switch` device (0/1 values)|none|input device only, no Home app UI|
-|outlet|switch (outlet)|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|light|switch (light)|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|switch|switch|any `Pushbutton` or `Switch` device (0/1 values)|none|
-|dimmer|dimmable light|`LightControllerV2` circuit|none|UUID needs to be in the format `<UUID>/AIxx`
-|lightoutput|auto-detected (see below)|any `LightControllerV2` output (subcontrol)|none|UUID needs to be in the format `<UUID>/AIxx`. The Matter device type is auto-detected from the output: `ColorPickerV2`/`TunableWhite` → color temperature light, `ColorPickerV2`/`Rgb` or `Lumitech` → RGBW light, `Dimmer` → dimmable light, `Switch` → on/off light|
-|mood|switch (light)|`LightControllerV2` mood|`moodId` ID of the mood||
-|radio|switch|`Radio`|`outputId` output number of the radio button||
-|smoke|smoke alarm|`SmokeAlarm`|none||
-|co|CO alarm|`InfoOnlyDigital` device (0/1 values)|none||
-|ac|airconditioner|`AcControl` device|none||
-|shade|window covering|Window shade or roof shade device|none||
+
+| type string   | mapped Matter device type | mapped Loxone device                             | additional aparameters                       | notes                                                                                                                                                                                                                                                                 |
+| ------------- | ------------------------- | ------------------------------------------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| contactsensor | contact sensor            | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
+| humidity      | humidity sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
+| temperature   | temperature sensor        | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
+| pressure      | pressure sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
+| waterleak     | water leak sensor         | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
+| motion        | occupancy sensor          | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
+| switch        | onOffSwitch               | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
+| button        | onOffSwitch               | any `Pushbutton` or `Switch` device (0/1 values) | none                                         | switches automatically back to off after 1 second                                                                                                                                                                                                                     |
+| pushbutton    | genericSwitch             | any `Pushbutton` or `Switch` device (0/1 values) | none                                         | input device only, no Home app UI                                                                                                                                                                                                                                     |
+| outlet        | switch (outlet)           | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
+| light         | switch (light)            | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
+| switch        | switch                    | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
+| dimmer        | dimmable light            | `LightControllerV2` circuit                      | none                                         | UUID needs to be in the format `<UUID>/AIxx`                                                                                                                                                                                                                          |
+| lightoutput   | auto-detected (see below) | any `LightControllerV2` output (subcontrol)      | none                                         | UUID needs to be in the format `<UUID>/AIxx`. The Matter device type is auto-detected from the output: `ColorPickerV2`/`TunableWhite` → color temperature light, `ColorPickerV2`/`Rgb` or `Lumitech` → RGBW light, `Dimmer` → dimmable light, `Switch` → on/off light |
+| mood          | switch (light)            | `LightControllerV2` mood                         | `moodId` ID of the mood                      |                                                                                                                                                                                                                                                                       |
+| radio         | switch                    | `Radio`                                          | `outputId` output number of the radio button |                                                                                                                                                                                                                                                                       |
+| smoke         | smoke alarm               | `SmokeAlarm`                                     | none                                         |                                                                                                                                                                                                                                                                       |
+| co            | CO alarm                  | `InfoOnlyDigital` device (0/1 values)            | none                                         |                                                                                                                                                                                                                                                                       |
+| ac            | airconditioner            | `AcControl` device                               | none                                         |                                                                                                                                                                                                                                                                       |
+| shade         | window covering           | Window shade or roof shade device                | none                                         |                                                                                                                                                                                                                                                                       |
 
 Optional settings are in the format of `key=value` and are separated by a comma.
 
@@ -91,6 +93,7 @@ Additionally, all devices support specifying remaining battery %, by adding a `b
 > Don't forget to restart matterbridge after making a configuration change
 
 #### Examples:
+
 - `161f7bd3-0200-79f6-ffff796b564594c0,radio,outputId=2` - results in a switch that corresponds to the second output of the radio button
 - `121b4263-0076-a710-ffff796b564594c0,mood,moodId=5` - results in a light that corresponds to mood with ID 5 on a light controller
 - `12233b6d-039a-ea64-ffff796b564594c0/AI9,lightoutput` - results in a color/white light auto-detected from the `AI9` output of a light controller

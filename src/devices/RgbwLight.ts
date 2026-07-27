@@ -5,9 +5,9 @@ import {
   type MatterbridgeEndpoint,
   type CommandHandlerPayload,
 } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOff, LevelControl, ColorControl } from "matterbridge/matter/clusters";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import { LoxoneLevelInfo } from "../data/LoxoneLevelInfo.js";
 import { MatterLevelInfo } from "../data/MatterLevelInfo.js";
 import {
@@ -24,11 +24,8 @@ import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js"
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  color: "color",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames);
+const STATE_NAMES = ["color"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 const DEFAULT_MIN_KELVIN = 2700;
 const DEFAULT_MAX_KELVIN = 6500;
@@ -53,12 +50,12 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
   private currentSaturation = 0;
   private currentKelvin: number;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [extendedColorLight, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "rgbw light",
       `${RgbwLight.name}_${control.structureSection.uuidAction.replace(/[^a-zA-Z0-9]/g, "_")}`,
     );
@@ -70,7 +67,7 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
     this.maxMireds = kelvinToMireds(this.minKelvin);
     this.currentKelvin = this.minKelvin;
 
-    const info = ColorInfo.fromEvent(this.getLatestTextEvent(StateNames.color));
+    const info = ColorInfo.fromEvent(this.getLatestTextEvent("color"));
     if (info) {
       this.currentBrightness = info.brightness;
       if (info.brightness > 0) this.lastNonZeroBrightness = info.brightness;
@@ -154,9 +151,7 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    await this.updateAttributesFromColorInfo(
-      ColorInfo.fromEvent(this.getLatestTextEvent(StateNames.color)),
-    );
+    await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(this.getLatestTextEvent("color")));
   }
 
   private async updateAttributesFromColorInfo(info: ColorInfo | undefined): Promise<void> {
@@ -229,7 +224,5 @@ class RgbwLight extends LoxoneDevice<StateNameType> {
     return ["rgbw"];
   }
 }
-
-RegisterLoxoneDevice(RgbwLight);
 
 export { RgbwLight };

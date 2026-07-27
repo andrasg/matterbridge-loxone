@@ -1,32 +1,26 @@
 import { type MatterbridgeEndpoint, occupancySensor } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OccupancySensing } from "matterbridge/matter/clusters";
-import {
-  ActiveOnlyStateNameKeys,
-  ActiveOnlyStateNames,
-  type ActiveOnlyStateNamesType,
-  SingleDataPointSensor,
-} from "./SingleDataPointSensor.js";
+import { type ActiveOnlyStateNamesType, SingleDataPointSensor } from "./SingleDataPointSensor.js";
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
 
 class MotionSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       MotionSensor.name,
       "motion sensor",
-      ActiveOnlyStateNameKeys[0],
+      "active",
       occupancySensor,
       OccupancySensing.id,
       "occupancy",
     );
 
-    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValueEvent = this.getLatestValueEvent("active");
     const initialValue = this.valueConverter(latestValueEvent).occupied;
 
     this.Endpoint =
@@ -41,7 +35,5 @@ class MotionSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
     return ["motion", "presence", "occupancy"];
   }
 }
-
-RegisterLoxoneDevice(MotionSensor);
 
 export { MotionSensor };

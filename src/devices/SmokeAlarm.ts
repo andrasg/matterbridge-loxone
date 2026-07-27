@@ -1,29 +1,25 @@
 import { bridgedNode, type MatterbridgeEndpoint, powerSource, smokeCoAlarm } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { SmokeCoAlarm } from "matterbridge/matter/clusters";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  level: "level",
-  alarmCause: "alarmCause",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const STATE_NAMES = ["level", "alarmCause"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class SmokeAlarm extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
   private cause = 0;
   private level = 0;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [smokeCoAlarm, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "smoke alarm",
       `${SmokeAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
@@ -32,8 +28,8 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
     const supportsSmoke = control.structureSection.details.availableAlarms & 0x01;
     if (!supportsSmoke) throw new Error(`Control ${control.name} does not support smoke alarms.`);
 
-    const latestCause = this.getLatestValueEvent(StateNames.level);
-    const latestLevel = this.getLatestValueEvent(StateNames.alarmCause);
+    const latestCause = this.getLatestValueEvent("level");
+    const latestLevel = this.getLatestValueEvent("alarmCause");
 
     this.cause = latestCause ? latestCause.value : 0;
     this.level = latestLevel ? latestLevel.value : 0;
@@ -54,11 +50,11 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
-    switch (event.state?.name) {
-      case StateNames.level:
+    switch (this.stateNameOf(event)) {
+      case "level":
         this.level = event.value;
         break;
-      case StateNames.alarmCause:
+      case "alarmCause":
         this.cause = event.value;
         break;
       default:
@@ -72,8 +68,8 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestCause = this.getLatestValueEvent(StateNames.alarmCause);
-    const latestLevel = this.getLatestValueEvent(StateNames.level);
+    const latestCause = this.getLatestValueEvent("alarmCause");
+    const latestLevel = this.getLatestValueEvent("level");
 
     this.cause = latestCause.value;
     this.level = latestLevel.value;
@@ -95,7 +91,5 @@ class SmokeAlarm extends LoxoneDevice<StateNameType> {
     return ["smoke", "smokesensor"];
   }
 }
-
-RegisterLoxoneDevice(SmokeAlarm);
 
 export { SmokeAlarm };

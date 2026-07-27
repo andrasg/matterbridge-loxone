@@ -4,6 +4,9 @@
   "name": "Node.js & TypeScript",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "mcr.microsoft.com/devcontainers/javascript-node",
+  "containerEnv": {
+    "TZ": "${localEnv:TZ}"
+  },
   "runArgs": ["--network=matterbridge_homekit", "--ip=192.168.20.53"],
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
@@ -16,6 +19,7 @@
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "postStartCommand": "bash .devcontainer/postStartCommand.sh",
+  "appPort": [8283],
   // Configure tool-specific properties.
   "customizations": {
     "vscode": {
@@ -74,6 +78,30 @@
         "chat.instructionsFilesLocations": {
           ".github/instructions": true,
           "~/.copilot/instructions": false
+        },
+        "chat.tools.terminal.autoApprove": {
+          "npx tsc": true,
+          "npx oxlint": true,
+          "npx oxfmt": true,
+          "npx vitest": true,
+          "npm run": true,
+          "npm run build": true,
+          "npm run typecheck": true,
+          "npm run lint": true,
+          "npm run format:check": true,
+          "npm run test": true,
+          "npm run test:coverage": true,
+          "npm run update-htmls": true,
+          "git status": true,
+          "git diff": true,
+          "git diff --check": true,
+          "git diff --stat": true,
+          "git log": true,
+          "git show": true,
+          "git branch -vv": true,
+          "git ls-files": true,
+          "git --no-pager diff --stat": true,
+          "git --no-pager diff --check": true
         },
         // Dev Container specific settings
         "terminal.integrated.defaultProfile.linux": "bash",

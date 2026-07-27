@@ -1,20 +1,20 @@
 import { bridgedNode, powerSource, genericSwitch, type MatterbridgeEndpoint } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import type { DeviceHost } from "./DeviceHost.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import { ActiveOnlyStateNameKeys, type ActiveOnlyStateNamesType } from "./SingleDataPointSensor.js";
+import { ACTIVE_ONLY_STATE_NAMES, type ActiveOnlyStateNamesType } from "./SingleDataPointSensor.js";
 
 class PushButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [genericSwitch, bridgedNode, powerSource],
-      ActiveOnlyStateNameKeys,
+      ACTIVE_ONLY_STATE_NAMES,
       "button",
       `${genericSwitch.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
@@ -43,7 +43,5 @@ class PushButton extends LoxoneDevice<ActiveOnlyStateNamesType> {
     return ["pushbutton"];
   }
 }
-
-RegisterLoxoneDevice(PushButton);
 
 export { PushButton };

@@ -1,24 +1,16 @@
 import { bridgedNode, type DeviceTypeDefinition, powerSource } from "matterbridge";
 import type { ClusterId } from "matterbridge/matter";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-export const ValueOnlyStateNames = {
-  value: "value",
-} as const;
-export const ValueOnlyStateNameKeys = Object.values(ValueOnlyStateNames);
-export type ValueOnlyStateNamesType =
-  (typeof ValueOnlyStateNames)[keyof typeof ValueOnlyStateNames];
+export const VALUE_ONLY_STATE_NAMES = ["value"] as const;
+export type ValueOnlyStateNamesType = (typeof VALUE_ONLY_STATE_NAMES)[number];
 
-export const ActiveOnlyStateNames = {
-  active: "active",
-} as const;
-export const ActiveOnlyStateNameKeys = Object.values(ActiveOnlyStateNames);
-export type ActiveOnlyStateNamesType =
-  (typeof ActiveOnlyStateNames)[keyof typeof ActiveOnlyStateNames];
+export const ACTIVE_ONLY_STATE_NAMES = ["active"] as const;
+export type ActiveOnlyStateNamesType = (typeof ACTIVE_ONLY_STATE_NAMES)[number];
 
 abstract class SingleDataPointSensor<T extends string = string> extends LoxoneDevice<T> {
   clusterId: ClusterId;
@@ -27,7 +19,7 @@ abstract class SingleDataPointSensor<T extends string = string> extends LoxoneDe
 
   constructor(
     control: Control,
-    platform: LoxonePlatform,
+    host: DeviceHost,
     className: string,
     shortTypeName: string,
     stateName: T,
@@ -37,7 +29,7 @@ abstract class SingleDataPointSensor<T extends string = string> extends LoxoneDe
   ) {
     super(
       control,
-      platform,
+      host,
       [sensorDeviceType, bridgedNode, powerSource],
       [stateName],
       shortTypeName,
@@ -49,7 +41,6 @@ abstract class SingleDataPointSensor<T extends string = string> extends LoxoneDe
     this.singleStateName = stateName;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   abstract valueConverter(
     event: LoxoneValueEvent | undefined,
   ): number | boolean | { occupied: boolean };

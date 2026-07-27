@@ -2,7 +2,7 @@ import {
   type CommandHandlerDataMap,
   type CommandHandlerFunction,
   type CommandHandlerPayload,
-  type CommandHandlerResponse,
+  type CommandHandlerResponseMap,
   type DeviceTypeDefinition,
   MatterbridgeEndpoint,
 } from "matterbridge";
@@ -10,7 +10,7 @@ import type { ActionContext, AtLeastOne, ClusterId } from "matterbridge/matter";
 import { PowerSource } from "matterbridge/matter/clusters";
 import { createHash } from "node:crypto";
 import { BatteryLevelInfo } from "../data/BatteryLevelInfo.js";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
@@ -20,24 +20,38 @@ import type { LoxoneEvent } from "loxone-ts-api/dist/LoxoneEvents/LoxoneEvent.js
 export const BASE_STATE_NAMES = ["battery"] as const;
 export type BaseStateNameType = (typeof BASE_STATE_NAMES)[number];
 
-// interface for allowing maintenance of device registry
-// allow additional constructor arguments for device subclasses that require extra params
-export interface ILoxoneDevice {
-  // allow additional constructor arguments for device subclasses that require extra params
-  new (
-    control: Control,
-    platform: LoxonePlatform,
-    additionalConfig: AdditionalConfig,
-  ): LoxoneDevice;
-  typeNames(): string[];
-}
-
-export function RegisterLoxoneDevice(ctor: ILoxoneDevice): ILoxoneDevice {
-  LoxoneDevice.registerSubclass(ctor as unknown as typeof LoxoneDevice);
-  return ctor;
-}
-
 export type AdditionalConfig = Record<string, string>;
+
+/**
+ * The Matter commands whose handler is not required to return a response.
+ *
+ * Mirrors how matterbridge resolves `CommandHandlerResponse<T>`: any command absent from
+ * `CommandHandlerResponseMap` responds with `void`. In practice that is every command except
+ * `DoorLock.getUser`.
+ */
+type VoidCommandHandlers = Exclude<keyof CommandHandlerDataMap, keyof CommandHandlerResponseMap>;
+
+/**
+ * Adapts a handler that returns nothing to the `CommandHandlerFunction<T>` matterbridge expects.
+ *
+ * `CommandHandlerResponse<T>` is a conditional type. TypeScript cannot evaluate it while `T` is
+ * still an unresolved generic, so it rejects a plain `Promise<void>` handler even though every
+ * command in `VoidCommandHandlers` resolves the conditional to `void`. Constraining `T` to
+ * `VoidCommandHandlers` makes the two types equivalent for every `T` this overload accepts, and
+ * the wider implementation signature lets the compiler check the body without a type assertion.
+ *
+ * @param {function} handler The handler to adapt.
+ *
+ * @returns {CommandHandlerFunction<T>} The same handler, typed for `MatterbridgeEndpoint`.
+ */
+function asVoidCommandHandler<T extends VoidCommandHandlers>(
+  handler: (data: CommandHandlerPayload<T>) => Promise<void>,
+): CommandHandlerFunction<T>;
+function asVoidCommandHandler(
+  handler: (data: CommandHandlerPayload) => Promise<void>,
+): CommandHandlerFunction {
+  return handler;
+}
 
 /**
  * Base class for Loxone devices. This class should be extended by all Loxone device classes.
@@ -48,18 +62,16 @@ abstract class LoxoneDevice<T extends string = string> {
   public control: Control;
   public roomname: string;
   public longname: string;
-  public platform: LoxonePlatform;
+  public host: DeviceHost;
   public typeName: string;
   public deviceTypeDefinitions: AtLeastOne<DeviceTypeDefinition>;
   public uniqueStorageKey: string;
   private batteryUUID: string | undefined;
   public statesByName: Map<T | BaseStateNameType, State> = new Map<T | BaseStateNameType, State>();
 
-  private static _deviceRegistry: (typeof LoxoneDevice)[] = [];
-
   constructor(
     control: Control,
-    platform: LoxonePlatform,
+    host: DeviceHost,
     deviceTypeDefinitions: AtLeastOne<DeviceTypeDefinition>,
     stateNames: readonly T[],
     typeName: string,
@@ -78,37 +90,10 @@ abstract class LoxoneDevice<T extends string = string> {
 
     this.roomname = control.room.name;
     this.longname = `${this.roomname}/${this.control.name}`;
-    this.platform = platform;
+    this.host = host;
     this.typeName = typeName;
     this.deviceTypeDefinitions = deviceTypeDefinitions;
     this.uniqueStorageKey = uniqueStorageKey;
-  }
-
-  /**
-   * Registers the device with the Matterbridge platform.
-   * This method is called by the LoxonePlatform when the device is created.
-   */
-  public async registerWithPlatform(): Promise<void> {
-    this.platform.setSelectDevice(
-      this.Endpoint.serialNumber ?? "",
-      this.Endpoint.deviceName ?? "",
-      undefined,
-      "hub",
-    );
-
-    if (this.platform.validateDevice(this.Endpoint.deviceName ?? "")) {
-      await this.platform.registerDevice(this.Endpoint);
-    }
-  }
-
-  public static registerSubclass(ctor: typeof LoxoneDevice): void {
-    if (!LoxoneDevice._deviceRegistry.includes(ctor)) {
-      LoxoneDevice._deviceRegistry.push(ctor);
-    }
-  }
-
-  public static getRegisteredSubclasses(): (typeof LoxoneDevice)[] {
-    return [...LoxoneDevice._deviceRegistry];
   }
 
   /**
@@ -123,7 +108,7 @@ abstract class LoxoneDevice<T extends string = string> {
     const endpoint = new MatterbridgeEndpoint(
       this.deviceTypeDefinitions,
       { id: this.uniqueStorageKey },
-      this.platform.config.debug,
+      this.host.config.debug,
     )
       .createDefaultIdentifyClusterServer()
       .createDefaultBridgedDeviceBasicInformationClusterServer(
@@ -132,14 +117,14 @@ abstract class LoxoneDevice<T extends string = string> {
         0xfff1,
         "Matterbridge",
         `Matterbridge ${this.typeName}`,
-        Number.parseInt(this.platform.version.replace(/\D/g, "")),
-        this.platform.version === "" ? "Unknown" : this.platform.version,
-        Number.parseInt(this.platform.matterbridge.matterbridgeVersion.replace(/\D/g, "")),
-        this.platform.matterbridge.matterbridgeVersion,
+        Number.parseInt(this.host.version.replace(/\D/g, "")),
+        this.host.version === "" ? "Unknown" : this.host.version,
+        Number.parseInt(this.host.matterbridgeVersion.replace(/\D/g, "")),
+        this.host.matterbridgeVersion,
       );
 
     endpoint.addCommandHandler("identify", ({ request: { identifyTime } }) => {
-      this.platform.log.info(`Command identify called identifyTime: ${identifyTime}`);
+      this.host.log.info(`Command identify called identifyTime: ${identifyTime}`);
     });
 
     return endpoint;
@@ -166,7 +151,7 @@ abstract class LoxoneDevice<T extends string = string> {
     this.batteryUUID = batteryUUID;
 
     // find state
-    const batteryState = this.platform.loxoneClient.states.get(batteryUUID);
+    const batteryState = this.host.getState(batteryUUID);
     if (!batteryState)
       throw new Error(`Could not find state found for batteryUUID '${batteryUUID}'`);
 
@@ -192,7 +177,7 @@ abstract class LoxoneDevice<T extends string = string> {
    * @param {T} event One of {@link MatterbridgeEndpointCommands}.
    * @param {} loxoneCommandFormatter Optional function to generate the Loxone command. If not provided, the parameter {@link event} will be used as the Loxone command.
    */
-  public addLoxoneCommandHandler<T extends keyof CommandHandlerDataMap>(
+  public addLoxoneCommandHandler<T extends VoidCommandHandlers>(
     event: T,
     loxoneCommandFormatter?: (data: CommandHandlerPayload<T>) => string,
   ): void {
@@ -200,15 +185,11 @@ abstract class LoxoneDevice<T extends string = string> {
     const loxoneCommandFormatterInner = loxoneCommandFormatter ?? ((): string => event);
 
     // delegate for executing the loxone command
-    const delegate: CommandHandlerFunction<T> = async (data: CommandHandlerPayload<T>) => {
+    const delegate = asVoidCommandHandler<T>(async (data) => {
       const commandString = loxoneCommandFormatterInner(data);
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-      await this.platform.loxoneClient.control(
-        this.control.structureSection.uuidAction,
-        commandString,
-      );
-      return undefined as CommandHandlerResponse<T>;
-    };
+      await this.host.sendControlCommand(this.control.structureSection.uuidAction, commandString);
+    });
 
     // register the delegate for the event
     this.Endpoint.addCommandHandler(event, delegate);
@@ -224,12 +205,15 @@ abstract class LoxoneDevice<T extends string = string> {
     cluster: ClusterId,
     attribute: string,
     loxoneCommandFormatter: (
+      // oxlint-disable-next-line typescript/no-explicit-any
       newValue: any,
+      // oxlint-disable-next-line typescript/no-explicit-any
       oldValue: any,
       context: ActionContext,
     ) => string | string[] | undefined,
   ): void {
     // the subscription listener must be synchronous, so the Loxone commands are sent fire-and-forget
+    // oxlint-disable-next-line typescript/no-explicit-any
     const delegate = (newValue: any, oldValue: any, context: ActionContext): void => {
       const commandStrings = loxoneCommandFormatter(newValue, oldValue, context);
 
@@ -256,7 +240,7 @@ abstract class LoxoneDevice<T extends string = string> {
   private async sendLoxoneCommands(commandStrings: string[]): Promise<void> {
     for (const commandString of commandStrings) {
       this.Endpoint.log.info(`Calling Loxone API command '${commandString}'`);
-      await this.platform.loxoneClient.control(this.control.uuidAction, commandString);
+      await this.host.sendControlCommand(this.control.uuidAction, commandString);
     }
   }
 
@@ -314,6 +298,23 @@ abstract class LoxoneDevice<T extends string = string> {
     if (!(state.latestEvent instanceof LoxoneTextEvent))
       throw new Error(`Latest event for state ${stateName} is not a text event`);
     return state.latestEvent;
+  }
+
+  /**
+   * Narrows the untyped state name of an event to one of the state names this device subscribed to.
+   * Use it as the subject of a `switch` so the compiler rejects unknown or misspelled state names.
+   * @param {LoxoneValueEvent | LoxoneTextEvent} event The event to resolve the state name of.
+   * @returns {T | BaseStateNameType | undefined} The state name, or undefined if the event does not belong to a subscribed state.
+   */
+  protected stateNameOf(
+    event: LoxoneValueEvent | LoxoneTextEvent,
+  ): T | BaseStateNameType | undefined {
+    const stateName = event.state?.name;
+    if (stateName === undefined) return undefined;
+    for (const knownStateName of this.statesByName.keys()) {
+      if (knownStateName === stateName) return knownStateName;
+    }
+    return undefined;
   }
 
   /**

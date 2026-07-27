@@ -10,8 +10,8 @@ import {
   TemperatureMeasurement,
   Thermostat,
 } from "matterbridge/matter/clusters";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import type { DeviceHost } from "./DeviceHost.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import {
   onOffValueConverter,
   numberValueConverter,
@@ -21,36 +21,33 @@ import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.j
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  status: "status",
-  mode: "mode",
-  fan: "fan",
-  temperature: "temperature",
-  targetTemperature: "targetTemperature",
-  silentMode: "silentMode",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const STATE_NAMES = [
+  "status",
+  "mode",
+  "fan",
+  "temperature",
+  "targetTemperature",
+  "silentMode",
+] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class AirConditioner extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [roomAirConditioner, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "airconditioner",
       `${AirConditioner.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
-    const latestStateValueEvent = this.getLatestValueEvent(StateNames.status);
+    const latestStateValueEvent = this.getLatestValueEvent("status");
     const state = onOffValueConverter(latestStateValueEvent);
-    const latestTargetTemperatureValueEvent = this.getLatestValueEvent(
-      StateNames.targetTemperature,
-    );
-    const latestCurrentTemperatureValueEvent = this.getLatestValueEvent(StateNames.temperature);
+    const latestTargetTemperatureValueEvent = this.getLatestValueEvent("targetTemperature");
+    const latestCurrentTemperatureValueEvent = this.getLatestValueEvent("temperature");
     const currentTemperature = numberValueConverter(latestCurrentTemperatureValueEvent);
 
     this.Endpoint = this.createDefaultEndpoint()
@@ -131,20 +128,20 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    for (const stateNameKey of StateNameKeys) {
+    for (const stateNameKey of STATE_NAMES) {
       const latestValueEvent = this.getLatestValueEvent(stateNameKey);
       await this.updateAttributesFromLoxoneEvent(latestValueEvent);
     }
   }
 
   private async updateAttributesFromLoxoneEvent(event: LoxoneValueEvent): Promise<void> {
-    switch (event.state?.name) {
-      case StateNames.status: {
+    switch (this.stateNameOf(event)) {
+      case "status": {
         const state = onOffValueConverter(event);
         await this.Endpoint.updateAttribute(OnOff.id, "onOff", state, this.Endpoint.log);
         break;
       }
-      case StateNames.targetTemperature: {
+      case "targetTemperature": {
         const targetTemperature = numberValueConverter(event);
         await this.Endpoint.updateAttribute(
           Thermostat.id,
@@ -160,7 +157,7 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
         );
         break;
       }
-      case StateNames.temperature: {
+      case "temperature": {
         const temperature = numberValueConverter(event);
         await this.Endpoint.updateAttribute(
           TemperatureMeasurement.id,
@@ -176,12 +173,12 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
         );
         break;
       }
-      case StateNames.mode: {
+      case "mode": {
         const mode = systemModeValueConverter(event);
         await this.Endpoint.updateAttribute(Thermostat.id, "systemMode", mode, this.Endpoint.log);
         break;
       }
-      case StateNames.fan:
+      case "fan":
         await this.Endpoint.updateAttribute(
           FanControl.id,
           "fanMode",
@@ -195,13 +192,10 @@ class AirConditioner extends LoxoneDevice<StateNameType> {
           this.Endpoint.log,
         );
         break;
-      case StateNames.silentMode:
+      case "silentMode":
       default:
     }
   }
 }
-
-// register device with the registry
-RegisterLoxoneDevice(AirConditioner);
 
 export { AirConditioner };

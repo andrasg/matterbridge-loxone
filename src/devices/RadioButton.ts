@@ -4,30 +4,27 @@ import {
   onOffLightSwitch,
   type MatterbridgeEndpoint,
 } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOff } from "matterbridge/matter/clusters";
-import { type AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { type AdditionalConfig, LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  activeOutput: "activeOutput",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames);
+const STATE_NAMES = ["activeOutput"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class RadioButton extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
   outputId: number;
   outputName: string;
 
-  constructor(control: Control, platform: LoxonePlatform, additionalConfig: AdditionalConfig) {
+  constructor(control: Control, host: DeviceHost, additionalConfig: AdditionalConfig) {
     super(
       control,
-      platform,
+      host,
       [onOffLightSwitch, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "radio button",
       `${RadioButton.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}_${additionalConfig.outputId}`,
     );
@@ -46,7 +43,7 @@ class RadioButton extends LoxoneDevice<StateNameType> {
 
     this.setNameSuffix(this.outputName);
 
-    const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
+    const latestActiveOutputEvent = this.getLatestValueEvent("activeOutput");
     const initialValue = latestActiveOutputEvent.value === this.outputId;
 
     this.Endpoint = this.createDefaultEndpoint()
@@ -80,7 +77,7 @@ class RadioButton extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestActiveOutputEvent = this.getLatestValueEvent(StateNames.activeOutput);
+    const latestActiveOutputEvent = this.getLatestValueEvent("activeOutput");
     await this.updateAttributesFromLoxoneEvent(latestActiveOutputEvent);
   }
 
@@ -97,7 +94,5 @@ class RadioButton extends LoxoneDevice<StateNameType> {
     return ["radio", "radiobutton"];
   }
 }
-
-RegisterLoxoneDevice(RadioButton);
 
 export { RadioButton };

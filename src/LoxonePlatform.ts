@@ -1,21 +1,24 @@
-import { MatterbridgeDynamicPlatform, type PlatformMatterbridge } from "matterbridge";
+import {
+  MatterbridgeDynamicPlatform,
+  type MatterbridgeEndpoint,
+  type PlatformMatterbridge,
+} from "matterbridge";
 import { type AnsiLogger, YELLOW, LogLevel, CYAN, nf } from "matterbridge/logger";
 import { isValidNumber, isValidString } from "matterbridge/utils";
-import { LoxoneDevice, type ILoxoneDevice } from "./devices/LoxoneDevice.js";
-import { createLightOutputDevice } from "./devices/LightOutput.js";
+import type { DeviceHost } from "./devices/DeviceHost.js";
+import type { LoxoneDevice } from "./devices/LoxoneDevice.js";
+import { deviceFactories } from "./devices/DeviceFactory.js";
 import { GIT_BRANCH, GIT_COMMIT } from "./gitInfo.js";
 import LoxoneClient from "loxone-ts-api";
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
-// oxlint-disable-next-line import/no-unassigned-import
-import "./devices/index.js"; // ensure all devices are loaded
+import type State from "loxone-ts-api/dist/Structure/State.js";
 import type { LoxonePlatformConfig } from "./LoxonePlatformConfig.js";
 
-export class LoxonePlatform extends MatterbridgeDynamicPlatform {
+export class LoxonePlatform extends MatterbridgeDynamicPlatform implements DeviceHost {
   public loxoneClient: LoxoneClient;
   private statusDevices = new Map<string, LoxoneDevice[]>();
   private allDevices: LoxoneDevice[] = [];
-  private deviceCtorByType: Map<string, ILoxoneDevice> = new Map<string, ILoxoneDevice>();
   private isPluginConfigured = false;
   private isConfigValid = false;
   public initialUpdateEvents: (LoxoneValueEvent | LoxoneTextEvent)[] = [];
@@ -83,6 +86,38 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     });
   }
 
+  /**
+   * The version of the running Matterbridge instance. Part of the {@link DeviceHost} contract.
+   *
+   * @returns {string} The Matterbridge version.
+   */
+  get matterbridgeVersion(): string {
+    return this.matterbridge.matterbridgeVersion;
+  }
+
+  /**
+   * Looks up a Loxone state by its UUID. Part of the {@link DeviceHost} contract.
+   *
+   * @param {string} uuid The state UUID as a string.
+   *
+   * @returns {State | undefined} The state, or `undefined` when no state with that UUID exists.
+   */
+  getState(uuid: string): State | undefined {
+    return this.loxoneClient.states.get(uuid);
+  }
+
+  /**
+   * Sends a command to a Loxone control. Part of the {@link DeviceHost} contract.
+   *
+   * @param {string} uuidAction The UUID of the control to send the command to.
+   * @param {string} command The Loxone command string, e.g. `on`, `off` or `setTarget/21`.
+   *
+   * @returns {Promise<void>} Resolves once the command has been sent.
+   */
+  async sendControlCommand(uuidAction: string, command: string): Promise<void> {
+    await this.loxoneClient.control(uuidAction, command);
+  }
+
   override async onStart(reason?: string): Promise<void> {
     if (!this.isConfigValid) {
       throw new Error("Plugin not configured yet, configure first, then restart.");
@@ -127,7 +162,6 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    this.createDeviceRegistry();
     await this.createDevices();
 
     await this.ready;
@@ -148,39 +182,6 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     // empty the initial update events cache as it's no longer needed
     this.initialUpdateEvents = [];
     this.log.info(`Platform configured.`);
-  }
-
-  private createDeviceRegistry(): void {
-    this.log.info("Creating LoxoneDevice registry...");
-    this.deviceCtorByType.clear();
-
-    const subclasses = LoxoneDevice.getRegisteredSubclasses();
-    for (const ctor of subclasses) {
-      try {
-        const names = ctor.typeNames();
-        if (!names || names.length === 0) {
-          this.log.warn(`Registered device class ${ctor.name} has no static typeNames()`);
-          continue;
-        }
-
-        for (const name of names) {
-          const key = name.toLowerCase();
-          if (this.deviceCtorByType.has(key)) {
-            this.log.warn(
-              `Device type name '${name}' from ${ctor.name} conflicts with existing registration. Overwriting.`,
-            );
-          }
-          // ctor is typeof LoxoneDevice (possibly abstract). Cast to LoxoneDeviceInterface which
-          // models a concrete constructible signature allowing extra args. This is safe because
-          // registered subclasses are concrete implementations.
-          this.deviceCtorByType.set(key, ctor as unknown as ILoxoneDevice);
-          this.log.debug(`Registered device type '${name}' -> ${ctor.name}`);
-        }
-      } catch (err: unknown) {
-        this.log.error(`Error registering device constructor ${ctor.name}: ${String(err)}`);
-      }
-    }
-    this.log.info(`Device registry created with ${this.deviceCtorByType.size} type entries.`);
   }
 
   private async createDevices(): Promise<void> {
@@ -239,20 +240,12 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
       `Found Loxone control with UUID ${controlUuid} type ${control.type}, name ${control.name} in room ${control.room.name}`,
     );
 
-    let device: LoxoneDevice;
-
-    // the 'lightoutput' keyword auto-detects the Matter device type from the resolved subcontrol
-    if (type.toLowerCase() === "lightoutput") {
-      device = createLightOutputDevice(control, this, additionalConfig);
-    } else {
-      // find the device constructor based on the type specified
-      const deviceCtor = this.deviceCtorByType.get(type.toLowerCase());
-      if (!deviceCtor) {
-        throw new Error(`No registered LoxoneDevice for type '${type}'`);
-      }
-
-      device = new deviceCtor(control, this, additionalConfig);
+    const deviceFactory = deviceFactories.get(type.toLowerCase());
+    if (!deviceFactory) {
+      throw new Error(`No registered LoxoneDevice for type '${type}'`);
     }
+
+    const device = deviceFactory(control, this, additionalConfig);
 
     this.log.info(`Created device of type '${type}': ${device.longname}`);
 
@@ -287,7 +280,22 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform {
     this.allDevices.push(device);
 
     // register with Matterbridge
-    await device.registerWithPlatform();
+    await this.registerEndpoint(device.Endpoint);
+  }
+
+  /**
+   * Offers an endpoint to the user for selection and registers it with Matterbridge when validated.
+   *
+   * @param {MatterbridgeEndpoint} endpoint The endpoint of a created device.
+   *
+   * @returns {Promise<void>} Resolves once the endpoint has been registered or skipped.
+   */
+  private async registerEndpoint(endpoint: MatterbridgeEndpoint): Promise<void> {
+    this.setSelectDevice(endpoint.serialNumber ?? "", endpoint.deviceName ?? "", undefined, "hub");
+
+    if (this.validateDevice(endpoint.deviceName ?? "")) {
+      await this.registerDevice(endpoint);
+    }
   }
 
   // oxlint-disable-next-line typescript/require-await
