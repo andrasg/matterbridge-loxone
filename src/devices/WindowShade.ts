@@ -5,21 +5,15 @@ import {
   type MatterbridgeEndpoint,
   type CommandHandlerPayload,
 } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { WindowCovering } from "matterbridge/matter/clusters";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  up: "up",
-  down: "down",
-  position: "position",
-  targetPosition: "targetPosition",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const STATE_NAMES = ["up", "down", "position", "targetPosition"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class WindowShade extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
@@ -29,17 +23,17 @@ class WindowShade extends LoxoneDevice<StateNameType> {
   private targetPosition = 0;
   private updatePending = false;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [windowCovering, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "window covering",
       `${WindowShade.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
-    const latestValueEvent = this.getLatestValueEvent(StateNames.position);
+    const latestValueEvent = this.getLatestValueEvent("position");
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
 
     this.Endpoint = this.createDefaultEndpoint().createDefaultWindowCoveringClusterServer(
@@ -75,17 +69,17 @@ class WindowShade extends LoxoneDevice<StateNameType> {
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneValueEvent)) return;
 
-    switch (event.state?.name) {
-      case StateNames.up:
+    switch (this.stateNameOf(event)) {
+      case "up":
         this.handleUpwardMovement(event);
         break;
-      case StateNames.down:
+      case "down":
         this.handleDownwardMovement(event);
         break;
-      case StateNames.position:
+      case "position":
         await this.handlePositionUpdate(event);
         break;
-      case StateNames.targetPosition:
+      case "targetPosition":
         this.handleTargetPositionUpdate(event);
         break;
       default:
@@ -194,10 +188,10 @@ class WindowShade extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestPositionValueEvent = this.getLatestValueEvent(StateNames.position);
-    const latestTargetPositionValueEvent = this.getLatestValueEvent(StateNames.targetPosition);
-    const latestUpValueEvent = this.getLatestValueEvent(StateNames.up);
-    const latestDownValueEvent = this.getLatestValueEvent(StateNames.down);
+    const latestPositionValueEvent = this.getLatestValueEvent("position");
+    const latestTargetPositionValueEvent = this.getLatestValueEvent("targetPosition");
+    const latestUpValueEvent = this.getLatestValueEvent("up");
+    const latestDownValueEvent = this.getLatestValueEvent("down");
 
     this.currentPosition = latestPositionValueEvent.value * 10000;
     this.targetPosition = latestTargetPositionValueEvent.value * 10000;
@@ -219,7 +213,5 @@ class WindowShade extends LoxoneDevice<StateNameType> {
     return ["shade", "windowshade", "shading"];
   }
 }
-
-RegisterLoxoneDevice(WindowShade);
 
 export { WindowShade };

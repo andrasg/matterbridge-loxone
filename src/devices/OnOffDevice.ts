@@ -4,38 +4,34 @@ import {
   type DeviceTypeDefinition,
   type MatterbridgeEndpoint,
 } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOff } from "matterbridge/matter/clusters";
 import { LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import {
-  ActiveOnlyStateNameKeys,
-  ActiveOnlyStateNames,
-  type ActiveOnlyStateNamesType,
-} from "./SingleDataPointSensor.js";
+import { ACTIVE_ONLY_STATE_NAMES, type ActiveOnlyStateNamesType } from "./SingleDataPointSensor.js";
 
 abstract class OnOffDevice extends LoxoneDevice<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
   constructor(
     control: Control,
-    platform: LoxonePlatform,
+    host: DeviceHost,
     className: string,
     shortTypeName: string,
     onOffDeviceType: DeviceTypeDefinition,
   ) {
     super(
       control,
-      platform,
+      host,
       [onOffDeviceType, bridgedNode, powerSource],
-      ActiveOnlyStateNameKeys,
+      ACTIVE_ONLY_STATE_NAMES,
       shortTypeName,
       `${className}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
-    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValueEvent = this.getLatestValueEvent("active");
     const initialValue = latestValueEvent ? latestValueEvent.value === 1 : false;
 
     this.Endpoint = this.createDefaultEndpoint()
@@ -53,7 +49,7 @@ abstract class OnOffDevice extends LoxoneDevice<ActiveOnlyStateNamesType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValueEvent = this.getLatestValueEvent("active");
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 

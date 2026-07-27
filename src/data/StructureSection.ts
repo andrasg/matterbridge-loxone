@@ -1,69 +1,69 @@
 interface SwitchControlSection {
   name: string;
-  type: 'switch';
+  type: "switch";
   uuidAction: string;
   room: string;
   states: {
-    'active': string;
+    active: string;
     [key: string]: string;
   };
 }
 
 interface SliderControlSection {
   name: string;
-  type: 'slider' | 'LeftRightAnalog' | 'InfoOnlyAnalog';
+  type: "slider" | "LeftRightAnalog" | "InfoOnlyAnalog";
   uuidAction: string;
   room: string;
   states: {
-    'value': string;
+    value: string;
     [key: string]: string;
   };
 }
 
 interface InfoOnlyDigitalControlSection {
   name: string;
-  type: 'InfoOnlyDigital';
+  type: "InfoOnlyDigital";
   uuidAction: string;
   room: string;
   states: {
-    'active': string;
+    active: string;
     [key: string]: string;
   };
 }
 
 interface LightControllerV2ControlSection {
   name: string;
-  type: 'LightControllerV2';
+  type: "LightControllerV2";
   uuidAction: string;
   room: string;
   states: {
-    'activeMoods': string;
-    'moodList': string;
+    activeMoods: string;
+    moodList: string;
     [key: string]: string;
   };
 }
 
 interface JalousieControlSection {
   name: string;
-  type: 'Jalousie';
+  type: "Jalousie";
   uuidAction: string;
   room: string;
   states: {
-    'up': string;
-    'down': string;
-    'position': string;
-    'targetPosition': string;
+    up: string;
+    down: string;
+    position: string;
+    targetPosition: string;
     [key: string]: string;
   };
 }
 
 interface RadioControlSection {
   name: string;
-  type: 'Radio';
+  type: "Radio";
   uuidAction: string;
   room: string;
   states: {
-    'activeOutput': string;
+    activeOutput: string;
     [key: string]: string;
   };
   details: {
@@ -72,6 +72,20 @@ interface RadioControlSection {
   };
 }
 
-type ControlSection = RadioControlSection | LightControllerV2ControlSection | InfoOnlyDigitalControlSection | SwitchControlSection | SliderControlSection | JalousieControlSection;
+type ControlSection =
+  | RadioControlSection
+  | LightControllerV2ControlSection
+  | InfoOnlyDigitalControlSection
+  | SwitchControlSection
+  | SliderControlSection
+  | JalousieControlSection;
 
-export { RadioControlSection, ControlSection, LightControllerV2ControlSection, InfoOnlyDigitalControlSection, SwitchControlSection, SliderControlSection, JalousieControlSection };
+export {
+  RadioControlSection,
+  ControlSection,
+  LightControllerV2ControlSection,
+  InfoOnlyDigitalControlSection,
+  SwitchControlSection,
+  SliderControlSection,
+  JalousieControlSection,
+};

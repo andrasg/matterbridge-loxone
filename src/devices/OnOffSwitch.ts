@@ -1,19 +1,16 @@
 import { onOffLightSwitch } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOffDevice } from "./OnOffDevice.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
 
 class OnOffSwitch extends OnOffDevice {
-  constructor(control: Control, platform: LoxonePlatform) {
-    super(control, platform, OnOffSwitch.name, "switch", onOffLightSwitch);
+  constructor(control: Control, host: DeviceHost) {
+    super(control, host, OnOffSwitch.name, "switch", onOffLightSwitch);
   }
 
   static override typeNames(): string[] {
     return ["switch"];
   }
 }
-
-RegisterLoxoneDevice(OnOffSwitch);
 
 export { OnOffSwitch };

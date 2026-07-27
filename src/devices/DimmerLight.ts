@@ -5,34 +5,31 @@ import {
   type MatterbridgeEndpoint,
   type CommandHandlerPayload,
 } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOff, LevelControl } from "matterbridge/matter/clusters";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import { LoxoneLevelInfo } from "../data/LoxoneLevelInfo.js";
 import { MatterLevelInfo } from "../data/MatterLevelInfo.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  position: "position",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames);
+const STATE_NAMES = ["position"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class DimmerLight extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [dimmableLight, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "dimmable light",
       `${DimmerLight.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
-    const latestValueEvent = this.getLatestValueEvent(StateNames.position);
+    const latestValueEvent = this.getLatestValueEvent("position");
     const value = LoxoneLevelInfo.fromLoxoneEvent(latestValueEvent);
 
     this.Endpoint = this.createDefaultEndpoint()
@@ -62,7 +59,7 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestValueEvent = this.getLatestValueEvent(StateNames.position);
+    const latestValueEvent = this.getLatestValueEvent("position");
     await this.updateAttributesFromLoxoneEvent(latestValueEvent);
   }
 
@@ -84,8 +81,5 @@ class DimmerLight extends LoxoneDevice<StateNameType> {
     return ["dimmer"];
   }
 }
-
-// register device with the registry
-RegisterLoxoneDevice(DimmerLight);
 
 export { DimmerLight };

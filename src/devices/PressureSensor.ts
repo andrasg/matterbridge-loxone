@@ -1,32 +1,26 @@
 import { type MatterbridgeEndpoint, pressureSensor } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { PressureMeasurement } from "matterbridge/matter/clusters";
-import {
-  ActiveOnlyStateNameKeys,
-  ActiveOnlyStateNames,
-  type ActiveOnlyStateNamesType,
-  SingleDataPointSensor,
-} from "./SingleDataPointSensor.js";
+import { type ActiveOnlyStateNamesType, SingleDataPointSensor } from "./SingleDataPointSensor.js";
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import { RegisterLoxoneDevice } from "./LoxoneDevice.js";
 
 class PressureSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       PressureSensor.name,
       "pressure sensor",
-      ActiveOnlyStateNameKeys[0],
+      "active",
       pressureSensor,
       PressureMeasurement.id,
       "measuredValue",
     );
 
-    const latestValueEvent = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValueEvent = this.getLatestValueEvent("active");
     const initialValue = this.valueConverter(latestValueEvent);
 
     this.Endpoint =
@@ -41,7 +35,5 @@ class PressureSensor extends SingleDataPointSensor<ActiveOnlyStateNamesType> {
     return ["pressure"];
   }
 }
-
-RegisterLoxoneDevice(PressureSensor);
 
 export { PressureSensor };

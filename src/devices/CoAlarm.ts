@@ -1,31 +1,27 @@
 import { bridgedNode, type MatterbridgeEndpoint, powerSource, smokeCoAlarm } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { SmokeCoAlarm } from "matterbridge/matter/clusters";
-import { LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
-import {
-  ActiveOnlyStateNameKeys,
-  ActiveOnlyStateNames,
-  type ActiveOnlyStateNamesType,
-} from "./SingleDataPointSensor.js";
+import { ACTIVE_ONLY_STATE_NAMES, type ActiveOnlyStateNamesType } from "./SingleDataPointSensor.js";
 import { alarmStateValueConverter } from "../utils/Converters.js";
 
 class CoAlarm extends LoxoneDevice<ActiveOnlyStateNamesType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  constructor(control: Control, platform: LoxonePlatform) {
+  constructor(control: Control, host: DeviceHost) {
     super(
       control,
-      platform,
+      host,
       [smokeCoAlarm, bridgedNode, powerSource],
-      ActiveOnlyStateNameKeys,
+      ACTIVE_ONLY_STATE_NAMES,
       "co alarm",
       `${CoAlarm.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}`,
     );
 
-    const latestValue = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValue = this.getLatestValueEvent("active");
     const alarmState: SmokeCoAlarm.AlarmState = alarmStateValueConverter(latestValue);
 
     this.Endpoint = this.createDefaultEndpoint().createCoOnlySmokeCOAlarmClusterServer(alarmState);
@@ -38,7 +34,7 @@ class CoAlarm extends LoxoneDevice<ActiveOnlyStateNamesType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestValue = this.getLatestValueEvent(ActiveOnlyStateNames.active);
+    const latestValue = this.getLatestValueEvent("active");
     await this.updateAttributesFromLoxoneEvent(latestValue);
   }
 
@@ -51,7 +47,5 @@ class CoAlarm extends LoxoneDevice<ActiveOnlyStateNamesType> {
     return ["co", "cosensor"];
   }
 }
-
-RegisterLoxoneDevice(CoAlarm);
 
 export { CoAlarm };

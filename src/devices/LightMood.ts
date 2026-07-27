@@ -1,29 +1,25 @@
 import { bridgedNode, powerSource, onOffLight, type MatterbridgeEndpoint } from "matterbridge";
-import type { LoxonePlatform } from "../LoxonePlatform.js";
+import type { DeviceHost } from "./DeviceHost.js";
 import { OnOff } from "matterbridge/matter/clusters";
-import { type AdditionalConfig, LoxoneDevice, RegisterLoxoneDevice } from "./LoxoneDevice.js";
+import { type AdditionalConfig, LoxoneDevice } from "./LoxoneDevice.js";
 import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
 import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
 import type Control from "loxone-ts-api/dist/Structure/Control.js";
 
-const StateNames = {
-  activeMoods: "activeMoods",
-  moodList: "moodList",
-} as const;
-type StateNameType = (typeof StateNames)[keyof typeof StateNames];
-const StateNameKeys = Object.values(StateNames) as StateNameType[];
+const STATE_NAMES = ["activeMoods", "moodList"] as const;
+type StateNameType = (typeof STATE_NAMES)[number];
 
 class LightMood extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
   moodId = -1;
   moodName = "";
 
-  constructor(control: Control, platform: LoxonePlatform, additionalConfig: AdditionalConfig) {
+  constructor(control: Control, host: DeviceHost, additionalConfig: AdditionalConfig) {
     super(
       control,
-      platform,
+      host,
       [onOffLight, bridgedNode, powerSource],
-      StateNameKeys,
+      STATE_NAMES,
       "light mood",
       `${LightMood.name}_${control.structureSection.uuidAction.replace(/-/g, "_")}_${additionalConfig.moodId}`,
     );
@@ -43,7 +39,7 @@ class LightMood extends LoxoneDevice<StateNameType> {
 
     this.setNameSuffix(this.moodName);
 
-    const latestActiveMoodsEvent = this.getLatestTextEvent(StateNames.activeMoods);
+    const latestActiveMoodsEvent = this.getLatestTextEvent("activeMoods");
     const initialValue = latestActiveMoodsEvent
       ? this.calculateState(latestActiveMoodsEvent)
       : false;
@@ -63,7 +59,7 @@ class LightMood extends LoxoneDevice<StateNameType> {
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
     if (!(event instanceof LoxoneTextEvent)) return;
 
-    if (event.state?.name === StateNames.moodList) return;
+    if (this.stateNameOf(event) === "moodList") return;
 
     await this.updateAttributesFromLoxoneEvent(event);
   }
@@ -73,7 +69,7 @@ class LightMood extends LoxoneDevice<StateNameType> {
   }
 
   private getMoodName(): string {
-    const moodListState = this.control.statesByName.get(StateNames.moodList);
+    const moodListState = this.control.statesByName.get("moodList");
     if (!moodListState?.latestEvent || !(moodListState.latestEvent instanceof LoxoneTextEvent)) {
       throw new Error(`Could not get moodlist for ${this.control.name}`);
     }
@@ -91,7 +87,7 @@ class LightMood extends LoxoneDevice<StateNameType> {
   }
 
   override async populateInitialState(): Promise<void> {
-    const latestActiveMoodsEvent = this.getLatestTextEvent(StateNames.activeMoods);
+    const latestActiveMoodsEvent = this.getLatestTextEvent("activeMoods");
     await this.updateAttributesFromLoxoneEvent(latestActiveMoodsEvent);
   }
 
@@ -104,7 +100,5 @@ class LightMood extends LoxoneDevice<StateNameType> {
     return ["mood"];
   }
 }
-
-RegisterLoxoneDevice(LightMood);
 
 export { LightMood };
