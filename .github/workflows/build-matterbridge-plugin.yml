@@ -86,9 +86,6 @@ jobs:
       - name: Link matterbridge
         run: npm link matterbridge
 
-      - name: Generate build info
-        run: npm run prebuild
-
       - name: Lint the project
         run: npm run lint
 
