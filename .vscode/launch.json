@@ -9,8 +9,12 @@
       "request": "launch",
       "runtimeArgs": ["run", "start"],
       "runtimeExecutable": "npm",
+      "preLaunchTask": "Build",
       "skipFiles": ["<node_internals>/**"],
       "type": "node",
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart",
+
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": ".*(http:\\/\\/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+)",
