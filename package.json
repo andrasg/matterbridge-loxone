@@ -1,6 +1,6 @@
 {
   "name": "matterbridge-loxone",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Loxone Matterbridge plugin",
   "keywords": [
     "loxone",
