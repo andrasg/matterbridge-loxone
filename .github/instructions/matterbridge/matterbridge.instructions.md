@@ -1,6 +1,6 @@
 ---
-name: "Matterbridge Endpoint Guide v.1.0.1"
-description: "How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package."
+name: 'Matterbridge Endpoint Guide v.1.0.1'
+description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package.'
 ---
 
 # Matterbridge Endpoint Guide
@@ -26,9 +26,9 @@ import {
   setAttribute,
   subscribeAttribute,
   updateAttribute,
-} from "matterbridge";
+} from 'matterbridge';
 
-import { LaundryWasher, RoboticVacuumCleaner } from "matterbridge/devices";
+import { LaundryWasher, RoboticVacuumCleaner } from 'matterbridge/devices';
 ```
 
 ## Create a MatterbridgeEndpoint
@@ -48,15 +48,9 @@ new MatterbridgeEndpoint(
 Recommended pattern:
 
 ```ts
-const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: "EntryDoor" })
+const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
   .createDefaultIdentifyClusterServer()
-  .createDefaultBridgedDeviceBasicInformationClusterServer(
-    "Entry Door",
-    "ENTRY-DOOR-001",
-    0xfff1,
-    "Matterbridge",
-    "Entry Door Sensor",
-  )
+  .createDefaultBridgedDeviceBasicInformationClusterServer('Entry Door', 'ENTRY-DOOR-001', 0xfff1, 'Matterbridge', 'Entry Door Sensor')
   .createDefaultBooleanStateClusterServer(false)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
   .addRequiredClusters();
@@ -120,7 +114,7 @@ In plugin code, call `this.registerDevice(device)`.
 DynamicPlatform bridged device:
 
 ```ts
-import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffLight } from "matterbridge";
+import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffLight } from 'matterbridge';
 
 export default function initializePlugin(matterbridge, log, config) {
   return new ExamplePlatform(matterbridge, log, config);
@@ -130,14 +124,8 @@ class ExamplePlatform extends MatterbridgeDynamicPlatform {
   async onStart(reason) {
     await this.ready;
 
-    const device = new MatterbridgeEndpoint(onOffLight, { id: "OnOffLightPlugin" })
-      .createDefaultBridgedDeviceBasicInformationClusterServer(
-        "Kitchen Light",
-        "LIGHT-001",
-        0xfff1,
-        "Matterbridge",
-        "Matterbridge OnOffLight",
-      )
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightPlugin' })
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Kitchen Light', 'LIGHT-001', 0xfff1, 'Matterbridge', 'Matterbridge OnOffLight')
       .addRequiredClusters();
 
     await this.registerDevice(device);
@@ -148,11 +136,7 @@ class ExamplePlatform extends MatterbridgeDynamicPlatform {
 AccessoryPlatform device:
 
 ```ts
-import {
-  MatterbridgeAccessoryPlatform,
-  MatterbridgeEndpoint,
-  temperatureSensor,
-} from "matterbridge";
+import { MatterbridgeAccessoryPlatform, MatterbridgeEndpoint, temperatureSensor } from 'matterbridge';
 
 export default function initializePlugin(matterbridge, log, config) {
   return new ExamplePlatform(matterbridge, log, config);
@@ -162,15 +146,8 @@ class ExamplePlatform extends MatterbridgeAccessoryPlatform {
   async onStart(reason) {
     await this.ready;
 
-    const device = new MatterbridgeEndpoint(temperatureSensor, { id: "TemperatureSensorPlugin" })
-      .createDefaultBasicInformationClusterServer(
-        "Temperature Sensor",
-        "TEMP-001",
-        0xfff1,
-        "Matterbridge",
-        0x8000,
-        "Matterbridge Temperature Sensor",
-      )
+    const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TemperatureSensorPlugin' })
+      .createDefaultBasicInformationClusterServer('Temperature Sensor', 'TEMP-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Temperature Sensor')
       .addRequiredClusters();
 
     await this.registerDevice(device);
@@ -181,15 +158,8 @@ class ExamplePlatform extends MatterbridgeAccessoryPlatform {
 Standalone Matter device from a plugin:
 
 ```ts
-const device = new MatterbridgeEndpoint(pressureSensor, { id: "ServerNodeDevice", mode: "server" })
-  .createDefaultBasicInformationClusterServer(
-    "Server Node Device",
-    "SERVER-001",
-    0xfff1,
-    "Matterbridge",
-    0x8000,
-    "Matterbridge Server Node Device",
-  )
+const device = new MatterbridgeEndpoint(pressureSensor, { id: 'ServerNodeDevice', mode: 'server' })
+  .createDefaultBasicInformationClusterServer('Server Node Device', 'SERVER-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Server Node Device')
   .addRequiredClusters();
 
 await this.registerDevice(device);
@@ -198,15 +168,8 @@ await this.registerDevice(device);
 Native Matter endpoint on the server node:
 
 ```ts
-const device = new MatterbridgeEndpoint(pressureSensor, { id: "MatterNodeDevice", mode: "matter" })
-  .createDefaultBasicInformationClusterServer(
-    "Matter Node Device",
-    "MATTER-001",
-    0xfff1,
-    "Matterbridge",
-    0x8000,
-    "Matterbridge Matter Node Device",
-  )
+const device = new MatterbridgeEndpoint(pressureSensor, { id: 'MatterNodeDevice', mode: 'matter' })
+  .createDefaultBasicInformationClusterServer('Matter Node Device', 'MATTER-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Matter Node Device')
   .addRequiredClusters();
 
 await this.registerDevice(device);
@@ -237,7 +200,7 @@ Common helpers on the endpoint instance:
 Example:
 
 ```ts
-await device.updateAttribute("OnOff", "onOff", true);
+await device.updateAttribute('OnOff', 'onOff', true);
 ```
 
 Cluster references can be passed in several ways:
@@ -287,9 +250,9 @@ Current exported single-class devices:
 ### Basic single-class example
 
 ```ts
-import { LaundryWasher } from "matterbridge/devices";
+import { LaundryWasher } from 'matterbridge/devices';
 
-const washer = new LaundryWasher("Laundry Washer", "LW-001");
+const washer = new LaundryWasher('Laundry Washer', 'LW-001');
 await this.registerDevice(washer);
 ```
 
@@ -300,9 +263,9 @@ This is enough because the class constructor already creates the required device
 Some single-class devices expose `mode` directly in their constructor. For example:
 
 ```ts
-import { RoboticVacuumCleaner } from "matterbridge/devices";
+import { RoboticVacuumCleaner } from 'matterbridge/devices';
 
-const robot = new RoboticVacuumCleaner("Robot Vacuum", "RVC-001", "server");
+const robot = new RoboticVacuumCleaner('Robot Vacuum', 'RVC-001', 'server');
 await this.registerDevice(robot);
 ```
 
@@ -319,23 +282,13 @@ Some single-class devices are composed devices and need child endpoints added af
 Example:
 
 ```ts
-import { PositionTag } from "@matter/node";
-import { Cooktop } from "matterbridge/devices";
+import { PositionTag } from '@matter/node';
+import { Cooktop } from 'matterbridge/devices';
 
-const cooktop = new Cooktop("Cooktop", "CT-001");
-cooktop.addSurface("Surface Top Left", [
-  {
-    mfgCode: null,
-    namespaceId: PositionTag.Top.namespaceId,
-    tag: PositionTag.Top.tag,
-    label: PositionTag.Top.label,
-  },
-  {
-    mfgCode: null,
-    namespaceId: PositionTag.Left.namespaceId,
-    tag: PositionTag.Left.tag,
-    label: PositionTag.Left.label,
-  },
+const cooktop = new Cooktop('Cooktop', 'CT-001');
+cooktop.addSurface('Surface Top Left', [
+  { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+  { mfgCode: null, namespaceId: PositionTag.Left.namespaceId, tag: PositionTag.Left.tag, label: PositionTag.Left.label },
 ]);
 
 await this.registerDevice(cooktop);
