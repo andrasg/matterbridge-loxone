@@ -7,7 +7,7 @@
   "containerEnv": {
     "TZ": "${localEnv:TZ}"
   },
-  "runArgs": ["--network=matterbridge_homekit", "--ip=192.168.20.53"],
+  "runArgs": ["--network=matterbridge_homekit", "--ip=192.168.20.53", "--name=matterbridge-loxone-dev"],
   // Features to add to the dev container. More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
