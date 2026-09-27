@@ -1,6 +1,7 @@
-import type { AnsiLogger } from "matterbridge/logger";
-import type State from "loxone-ts-api/dist/Structure/State.js";
-import type { LoxonePlatformConfig } from "../LoxonePlatformConfig.js";
+import type State from 'loxone-ts-api/dist/Structure/State.js';
+import type { AnsiLogger } from 'matterbridge/logger';
+
+import type { LoxonePlatformConfig } from '../LoxonePlatformConfig.js';
 
 /**
  * Narrow contract the device layer needs from its host.
@@ -38,7 +39,7 @@ export interface DeviceHost {
    * @param {string} uuidAction The UUID of the control to send the command to.
    * @param {string} command The Loxone command string, e.g. `on`, `off` or `setTarget/21`.
    *
-   * @returns {Promise<void>} Resolves once the command has been sent.
+   * @returns {Promise<void>} Resolves when Loxone reports success; rejects when the command fails or cannot be sent.
    */
   sendControlCommand(uuidAction: string, command: string): Promise<void>;
 }

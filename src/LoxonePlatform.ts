@@ -100,7 +100,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform implements Devic
    * @param {string} uuidAction The UUID of the control to send the command to.
    * @param {string} command The Loxone command string, e.g. `on`, `off` or `setTarget/21`.
    *
-   * @returns {Promise<void>} Resolves once the command has been sent.
+   * @returns {Promise<void>} Resolves when Loxone reports success; rejects when the command fails or cannot be sent.
    */
   async sendControlCommand(uuidAction: string, command: string): Promise<void> {
     await this.loxoneClient.control(uuidAction, command);
