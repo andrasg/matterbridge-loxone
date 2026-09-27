@@ -140,3 +140,6 @@ dist
 
 # exclude build info
 src/gitInfo.ts
+
+# local work plans
+plans/
