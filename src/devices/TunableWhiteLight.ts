@@ -1,22 +1,18 @@
-import {
-  bridgedNode,
-  powerSource,
-  colorTemperatureLight,
-  type MatterbridgeEndpoint,
-  type CommandHandlerPayload,
-} from "matterbridge";
-import type { DeviceHost } from "./DeviceHost.js";
-import { OnOff, LevelControl, ColorControl } from "matterbridge/matter/clusters";
-import { LoxoneDevice } from "./LoxoneDevice.js";
-import { LoxoneLevelInfo } from "../data/LoxoneLevelInfo.js";
-import { MatterLevelInfo } from "../data/MatterLevelInfo.js";
-import { ColorInfo, kelvinToMireds, miredsToKelvin, clamp } from "../data/ColorInfo.js";
-import LoxoneTextEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js";
-import type LoxoneValueEvent from "loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js";
-import type Control from "loxone-ts-api/dist/Structure/Control.js";
+import LoxoneTextEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneTextEvent.js';
+import LoxoneValueEvent from 'loxone-ts-api/dist/LoxoneEvents/LoxoneValueEvent.js';
+import type Control from 'loxone-ts-api/dist/Structure/Control.js';
+import { bridgedNode, powerSource, colorTemperatureLight, type MatterbridgeEndpoint } from 'matterbridge';
+import { OnOff, LevelControl, ColorControl } from 'matterbridge/matter/clusters';
 
-const STATE_NAMES = ["color"] as const;
-type StateNameType = (typeof STATE_NAMES)[number];
+import { ColorInfo, kelvinToMireds, miredsToKelvin, clamp } from '../data/ColorInfo.js';
+import { LoxoneLevelInfo } from '../data/LoxoneLevelInfo.js';
+import { MatterLevelInfo } from '../data/MatterLevelInfo.js';
+import type { DeviceHost } from './DeviceHost.js';
+import { LightCommandBridge } from './LightCommandBridge.js';
+import { LoxoneDevice } from './LoxoneDevice.js';
+
+const STATE_NAMES = ['color'] as const;
+type StateNameType = (typeof STATE_NAMES)[number] | 'sequenceColorIdx';
 
 const DEFAULT_MIN_KELVIN = 2700;
 const DEFAULT_MAX_KELVIN = 6500;
@@ -27,6 +23,8 @@ const DEFAULT_MAX_KELVIN = 6500;
  */
 class TunableWhiteLight extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
+  private readonly lightCommands: LightCommandBridge;
+  private isSequenceActive = false;
 
   private minKelvin: number;
   private maxKelvin: number;
@@ -34,7 +32,6 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
   private maxMireds: number;
 
   private currentBrightness = 0;
-  private lastNonZeroBrightness = 100;
   private currentKelvin: number;
 
   constructor(control: Control, host: DeviceHost) {
@@ -43,9 +40,15 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
       host,
       [colorTemperatureLight, bridgedNode, powerSource],
       STATE_NAMES,
-      "tunable white light",
-      `${TunableWhiteLight.name}_${control.structureSection.uuidAction.replace(/[^a-zA-Z0-9]/g, "_")}`,
+      'tunable white light',
+      `${TunableWhiteLight.name}_${control.structureSection.uuidAction.replace(/[^a-zA-Z0-9]/g, '_')}`,
     );
+
+    const sequenceState = control.statesByName.get('sequenceColorIdx');
+    if (sequenceState) {
+      this.statesByName.set('sequenceColorIdx', sequenceState);
+      this.updateSequenceState(sequenceState.latestEvent);
+    }
 
     const range = TunableWhiteLight.readKelvinRange(control);
     this.minKelvin = range.min;
@@ -54,12 +57,10 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
     this.maxMireds = kelvinToMireds(this.minKelvin);
     this.currentKelvin = this.minKelvin;
 
-    const info = ColorInfo.fromEvent(this.getLatestTextEvent("color"));
+    const info = ColorInfo.fromEvent(this.getLatestTextEvent('color'));
     if (info) {
       this.currentBrightness = info.brightness;
-      if (info.brightness > 0) this.lastNonZeroBrightness = info.brightness;
-      if (info.kind === "temp" && info.kelvin > 0)
-        this.currentKelvin = clamp(info.kelvin, this.minKelvin, this.maxKelvin);
+      if (info.kind === 'temp' && info.kelvin > 0) this.currentKelvin = clamp(info.kelvin, this.minKelvin, this.maxKelvin);
     }
 
     const level = new LoxoneLevelInfo(this.currentBrightness);
@@ -68,79 +69,59 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
     this.Endpoint = this.createDefaultEndpoint()
       .createDefaultGroupsClusterServer()
       .createDefaultOnOffClusterServer(level.onOff)
-      .createDefaultLevelControlClusterServer(level.matterLevel)
+      .createDefaultLevelControlClusterServer(level.onOff ? level.matterLevel : 254)
       .createCtColorControlClusterServer(initialMireds, this.minMireds, this.maxMireds);
 
-    this.addLoxoneCommandHandler("on", () => `setBrightness/${this.lastNonZeroBrightness}`);
-    this.addLoxoneCommandHandler("off", () => "setBrightness/0");
-    this.addLoxoneCommandHandler("moveToLevel", (data: CommandHandlerPayload<"moveToLevel">) => {
-      const value = MatterLevelInfo.fromMatterNumber(data.request.level);
-      return `setBrightness/${value.loxoneLevel}`;
-    });
-    this.addLoxoneCommandHandler(
-      "moveToLevelWithOnOff",
-      (data: CommandHandlerPayload<"moveToLevelWithOnOff">) => {
-        const value = MatterLevelInfo.fromMatterNumber(data.request.level);
-        return `setBrightness/${value.loxoneLevel}`;
+    this.lightCommands = new LightCommandBridge(
+      this.Endpoint,
+      (colorState) => {
+        const level = this.Endpoint.getAttribute(LevelControl, 'currentLevel') ?? 254;
+        const brightness = this.Endpoint.getAttribute(OnOff, 'onOff') ? Math.max(1, MatterLevelInfo.fromMatterNumber(level).loxoneLevel) : 0;
+        if (this.isSequenceActive && !colorState) return `setBrightness/${brightness}`;
+        const mireds = colorState?.colorTemperatureMireds ?? this.Endpoint.getAttribute(ColorControl, 'colorTemperatureMireds') ?? this.minMireds;
+        const kelvin = clamp(miredsToKelvin(mireds), this.minKelvin, this.maxKelvin);
+        return `temp(${brightness},${kelvin})`;
       },
-    );
-    this.addLoxoneCommandHandler(
-      "moveToColorTemperature",
-      (data: CommandHandlerPayload<"moveToColorTemperature">) => {
-        const kelvin = clamp(
-          miredsToKelvin(data.request.colorTemperatureMireds),
-          this.minKelvin,
-          this.maxKelvin,
-        );
-        this.currentKelvin = kelvin;
-        return `temp(${this.currentBrightness},${kelvin})`;
-      },
+      async (command) => await this.host.sendControlCommand(this.control.uuidAction, command),
     );
   }
 
   override async handleLoxoneDeviceEvent(event: LoxoneValueEvent | LoxoneTextEvent): Promise<void> {
-    if (!(event instanceof LoxoneTextEvent)) return;
+    if (this.stateNameOf(event) === 'sequenceColorIdx') {
+      this.updateSequenceState(event);
+      return;
+    }
+    if (this.stateNameOf(event) !== 'color' || !(event instanceof LoxoneTextEvent)) return;
 
-    await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(event));
+    await this.lightCommands.updateFromLoxone(async () => await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(event)));
   }
 
   override async populateInitialState(): Promise<void> {
-    await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(this.getLatestTextEvent("color")));
+    this.updateSequenceState(this.statesByName.get('sequenceColorIdx')?.latestEvent);
+    await this.lightCommands.updateFromLoxone(async () => await this.updateAttributesFromColorInfo(ColorInfo.fromEvent(this.getLatestTextEvent('color'))));
+  }
+
+  private updateSequenceState(event: unknown): void {
+    this.isSequenceActive = event instanceof LoxoneValueEvent && Number.isInteger(event.value) && event.value >= 0;
   }
 
   private async updateAttributesFromColorInfo(info: ColorInfo | undefined): Promise<void> {
     if (!info) return;
 
     this.currentBrightness = info.brightness;
-    if (info.brightness > 0) this.lastNonZeroBrightness = info.brightness;
 
     const level = new LoxoneLevelInfo(info.brightness);
-    await this.Endpoint.updateAttribute(OnOff.id, "onOff", level.onOff, this.Endpoint.log);
+    await this.Endpoint.updateAttribute(OnOff.id, 'onOff', level.onOff, this.Endpoint.log);
 
     if (info.brightness > 0) {
-      await this.Endpoint.updateAttribute(
-        LevelControl.id,
-        "currentLevel",
-        level.matterLevel,
-        this.Endpoint.log,
-      );
+      await this.Endpoint.updateAttribute(LevelControl.id, 'currentLevel', level.matterLevel, this.Endpoint.log);
     }
 
-    if (info.kind === "temp" && info.kelvin > 0) {
+    if (info.kind === 'temp' && info.kelvin > 0) {
       this.currentKelvin = clamp(info.kelvin, this.minKelvin, this.maxKelvin);
       const mireds = clamp(kelvinToMireds(this.currentKelvin), this.minMireds, this.maxMireds);
-      await this.Endpoint.updateAttribute(
-        ColorControl.id,
-        "colorMode",
-        ColorControl.ColorMode.ColorTemperatureMireds,
-        this.Endpoint.log,
-      );
-      await this.Endpoint.updateAttribute(
-        ColorControl.id,
-        "colorTemperatureMireds",
-        mireds,
-        this.Endpoint.log,
-      );
+      await this.Endpoint.updateAttribute(ColorControl.id, 'colorMode', ColorControl.ColorMode.ColorTemperatureMireds, this.Endpoint.log);
+      await this.Endpoint.updateAttribute(ColorControl.id, 'colorTemperatureMireds', mireds, this.Endpoint.log);
     }
   }
 
@@ -154,7 +135,7 @@ class TunableWhiteLight extends LoxoneDevice<StateNameType> {
   }
 
   static override typeNames(): string[] {
-    return ["tunableWhite"];
+    return ['tunableWhite'];
   }
 }
 

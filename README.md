@@ -34,9 +34,23 @@ This plugin supports the following Loxone device types
 
 ## Installation
 
+Requires Matterbridge 3.10.11 or newer.
+
 Install this plugin using the matterbridge web UI by typing `matterbridge-loxone` into the Install plugins section and clicking the Install button.
 
 > Don't forget to restart matterbridge afterwards.
+
+### Light commands
+
+On/off lights, dimmers, tunable-white lights, and RGBW lights forward accepted Matter state changes to Loxone. This includes toggle, timed on/off, off-with-effect, and global-scene recall. Dimmers and colour lights also support level move/step/stop commands, including their OnOff variants. RGBW lights support hue/saturation move and step commands; RGBW and tunable-white lights support colour-temperature move/step/stop commands.
+
+Matter.js manages transitions and timers; the plugin sends the resulting levels and colours to Loxone. Physical fade timing depends on Miniserver responsiveness. Outgoing updates are serialized, with intermediate pending values coalesced when Loxone is slower than the transition. Loxone feedback is not echoed back as a command.
+
+Dimmers use Loxone's native `on` command for on, toggle-on, and timed-on requests, restoring the Miniserver's last brightness even after the plugin restarts while a light is off. Explicit level commands still send numeric positions. All positive position feedback, including `1`, updates Matter brightness; position `0` turns the light off while retaining the previous brightness.
+
+RGBW and tunable-white lights use `sequenceColorIdx`, when available, to detect active Loxone sequences. Brightness-only updates during an active sequence use `setBrightness`; colour changes use `hsv` or `temp`. Without a reported active sequence, brightness and off commands use the current fixed colour with the requested brightness (zero for off). Pending colour values are retained when brightness updates are coalesced. Sequence preservation across off/on, including daylight sequences, still requires live-device verification.
+
+RGBW endpoints expose hue/saturation and colour temperature, not XY or enhanced hue. Moods, outlets, switches, and buttons retain their existing command handling.
 
 ## Configuration
 
@@ -68,6 +82,7 @@ The plugin supports the following types
 | humidity      | humidity sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
 | temperature   | temperature sensor        | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
 | pressure      | pressure sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
+| lightsensor   | illuminance sensor        | any `InfoOnlyAnalog` device (lux values)         | none                                         | Uses Matterbridge's lux encoding. Readings below 1 lux or non-finite values report 0; encoded values are capped at 65534. |
 | waterleak     | water leak sensor         | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
 | motion        | occupancy sensor          | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
 | switch        | onOffSwitch               | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
