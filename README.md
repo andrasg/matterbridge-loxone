@@ -100,6 +100,8 @@ The plugin supports the following types
 | ac            | airconditioner            | `AcControl` device                               | none                                         |                                                                                                                                                                                                                                                                       |
 | shade         | window covering           | Window shade or roof shade device                | none                                         |                                                                                                                                                                                                                                                                       |
 
+Shades are exposed as lift-only window coverings. Lift and global movement status follow the shade; tilt remains stopped during movement and state restoration. Slat-angle control is not exposed.
+
 Optional settings are in the format of `key=value` and are separated by a comma.
 
 Additionally, all devices support specifying remaining battery %, by adding a `battery` setting to the optional settings:
