@@ -106,6 +106,8 @@ Pressure readings must be supplied in hPa (equivalent to mbar). Matter uses whol
 
 Shades are exposed as lift-only window coverings. Lift and global movement status follow the shade; tilt remains stopped during movement and state restoration. Slat-angle control is not exposed.
 
+AC setpoint, system-mode, and fan attribute subscriptions forward only changes originating from a Matter fabric. Loxone feedback and initial-state restoration update Matter attributes without sending commands back to Loxone. Outbound temperature setpoints still round to whole degrees; fan mapping is unchanged.
+
 Radio outputs use their configured IDs (1-16, including sparse IDs). Turning an output off sends `reset` only if that output is the known selection; turning off an inactive output sends nothing. Commands for the same Radio are serialized and retain the last sent selection until newer feedback is available, so selecting Night and then turning Day off does not reset Night merely because feedback is delayed. A simultaneous selection change from another controller can still race with Loxone's global `reset` command.
 
 `outputId=allOff` (also accepted as `0`) is available only when the Radio has a non-empty `details.allOff` name. Turning it on sends `reset`. Turning it off while active is rejected: select a named output instead. Turning it off while already inactive sends nothing.
