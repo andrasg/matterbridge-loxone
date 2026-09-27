@@ -250,7 +250,7 @@ export class LoxonePlatform extends MatterbridgeDynamicPlatform implements Devic
     }
 
     // add potentially missing types
-    device.Endpoint.addRequiredClusterServers();
+    device.Endpoint.addRequiredClusters();
 
     // keep reference to the device
     this.allDevices.push(device);
