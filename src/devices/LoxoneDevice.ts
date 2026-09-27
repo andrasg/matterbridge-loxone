@@ -163,8 +163,13 @@ abstract class LoxoneDevice<T extends string = string> {
 
     // set the initial battery attribute
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(batteryState.latestEvent);
+    if (batteryLevelInfo.batteryPercentageAdjusted) {
+      this.Endpoint.log.warn(
+        `Battery percentage for ${this.longname} is outside 0-100 or non-finite; clamping to ${batteryLevelInfo.batteryPercent}`,
+      );
+    }
     this.Endpoint.createDefaultPowerSourceReplaceableBatteryClusterServer(
-      batteryLevelInfo.batteryRemaining,
+      batteryLevelInfo.batteryPercent,
       batteryLevelInfo.batteryStatus,
     );
 
@@ -267,6 +272,11 @@ abstract class LoxoneDevice<T extends string = string> {
 
   private async handleBatteryEvent(event: LoxoneEvent): Promise<void> {
     const batteryLevelInfo = BatteryLevelInfo.fromEvent(event);
+    if (batteryLevelInfo.batteryPercentageAdjusted) {
+      this.Endpoint.log.warn(
+        `Battery percentage for ${this.longname} is outside 0-100 or non-finite; clamping to ${batteryLevelInfo.batteryPercent}`,
+      );
+    }
 
     await this.Endpoint.updateAttribute(
       PowerSource.id,
