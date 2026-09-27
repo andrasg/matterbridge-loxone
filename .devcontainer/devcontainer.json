@@ -9,7 +9,9 @@
   },
   "runArgs": ["--network=matterbridge_homekit", "--ip=192.168.20.53"],
   // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
   "mounts": [
     // Mount the local directory to /workspaces in the container.
     "source=${localWorkspaceFolder}/.matterbridge/,target=/home/node/.matterbridge/,type=bind,consistency=cached"
@@ -109,14 +111,7 @@
           "watchFile": "dynamicPriorityPolling",
           "watchDirectory": "dynamicPriorityPolling",
           "fallbackPolling": "dynamicPriorityPolling",
-          "excludeDirectories": [
-            "**/.cache/**",
-            "**/node_modules/**",
-            "**/coverage/**",
-            "**/dist/**",
-            "**/build/**",
-            "**/docs/**"
-          ]
+          "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
         }
       }
     }
