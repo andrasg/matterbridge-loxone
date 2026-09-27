@@ -32,6 +32,8 @@ This plugin supports the following Loxone device types
 - CO sensor
 - AC
 
+Smoke alarms report Matter `Critical` when the Loxone smoke cause bit is set and the level is either Pre Alarm (`1`) or Main Alarm (`2`). Both levels use the same severity, so escalation does not clear the alarm. A cleared level or causes without smoke report `Normal`. This mapping applies at startup, state restoration, and during updates.
+
 ## Installation
 
 Requires Matterbridge 3.10.11 or newer.
@@ -82,7 +84,7 @@ The plugin supports the following types
 | humidity      | humidity sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
 | temperature   | temperature sensor        | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
 | pressure      | pressure sensor           | any `InfoOnlyAnalog` device (numeric values)     | none                                         |
-| lightsensor   | illuminance sensor        | any `InfoOnlyAnalog` device (lux values)         | none                                         | Uses Matterbridge's lux encoding. Readings below 1 lux or non-finite values report 0; encoded values are capped at 65534. |
+| lightsensor   | illuminance sensor        | any `InfoOnlyAnalog` device (lux values)         | none                                         | Uses Matterbridge's lux encoding. Readings below 1 lux or non-finite values report 0; encoded values are capped at 65534.                                                                                                                                             |
 | waterleak     | water leak sensor         | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
 | motion        | occupancy sensor          | any `InfoOnlyDigital` device (0/1 values)        | none                                         |
 | switch        | onOffSwitch               | any `Pushbutton` or `Switch` device (0/1 values) | none                                         |
