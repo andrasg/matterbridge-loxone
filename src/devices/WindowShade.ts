@@ -13,7 +13,8 @@ type StateNameType = (typeof STATE_NAMES)[number];
 class WindowShade extends LoxoneDevice<StateNameType> {
   public Endpoint: MatterbridgeEndpoint;
 
-  private operationalStatus: WindowCovering.MovementStatus = WindowCovering.MovementStatus.Stopped;
+  private isMovingUp: boolean;
+  private isMovingDown: boolean;
   private currentPosition = 0;
   private targetPosition = 0;
   private updatePending = false;
@@ -30,6 +31,8 @@ class WindowShade extends LoxoneDevice<StateNameType> {
 
     const latestValueEvent = this.getLatestValueEvent('position');
     this.currentPosition = latestValueEvent ? latestValueEvent.value * 10000 : 0;
+    this.isMovingUp = this.getLatestValueEvent('up').value === 1;
+    this.isMovingDown = this.getLatestValueEvent('down').value === 1;
 
     this.Endpoint = this.createDefaultEndpoint().createDefaultWindowCoveringClusterServer(this.currentPosition);
 
@@ -90,27 +93,22 @@ class WindowShade extends LoxoneDevice<StateNameType> {
   }
 
   private handleDownwardMovement(event: LoxoneValueEvent): void {
-    if (event.value === 1) {
-      this.Endpoint.log.info(`Moving up`);
-      this.operationalStatus = WindowCovering.MovementStatus.Closing;
-      this.handleMovementActionWithDelay();
-    } else {
-      this.Endpoint.log.info(`Stopping`);
-      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-      this.handleMovementActionWithDelay();
-    }
+    this.isMovingDown = event.value === 1;
+    this.handleMovementActionWithDelay();
   }
 
   private handleUpwardMovement(event: LoxoneValueEvent): void {
-    if (event.value === 1) {
-      this.Endpoint.log.info(`Moving up`);
-      this.operationalStatus = WindowCovering.MovementStatus.Opening;
-      this.handleMovementActionWithDelay();
-    } else {
-      this.Endpoint.log.info(`Stopping`);
-      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-      this.handleMovementActionWithDelay();
-    }
+    this.isMovingUp = event.value === 1;
+    this.handleMovementActionWithDelay();
+  }
+
+  /**
+   * Derives movement from both direction flags; conflicting or inactive flags report stopped.
+   * @returns {WindowCovering.MovementStatus} The current lift movement status.
+   */
+  private get operationalStatus(): WindowCovering.MovementStatus {
+    if (this.isMovingUp === this.isMovingDown) return WindowCovering.MovementStatus.Stopped;
+    return this.isMovingUp ? WindowCovering.MovementStatus.Opening : WindowCovering.MovementStatus.Closing;
   }
 
   handleMovementActionWithDelay(): void {
@@ -163,16 +161,8 @@ class WindowShade extends LoxoneDevice<StateNameType> {
 
     this.currentPosition = latestPositionValueEvent.value * 10000;
     this.targetPosition = latestTargetPositionValueEvent.value * 10000;
-    if (latestUpValueEvent.value === 0 && latestDownValueEvent.value === 0) {
-      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-    } else if (latestUpValueEvent.value === 1) {
-      this.operationalStatus = WindowCovering.MovementStatus.Opening;
-    } else if (latestDownValueEvent.value === 1) {
-      this.operationalStatus = WindowCovering.MovementStatus.Closing;
-    } else {
-      this.Endpoint.log.warn(`Invalid operational status for ${this.longname}`);
-      this.operationalStatus = WindowCovering.MovementStatus.Stopped;
-    }
+    this.isMovingUp = latestUpValueEvent.value === 1;
+    this.isMovingDown = latestDownValueEvent.value === 1;
 
     await this.updateAttributesFromInternalState();
   }

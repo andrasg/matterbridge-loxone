@@ -104,7 +104,7 @@ The plugin supports the following types
 
 Pressure readings must be supplied in hPa (equivalent to mbar). Matter uses whole 0.1 kPa units, so `1013.25 hPa` is rounded to `1013`. Finite readings are clamped to the signed 16-bit range (-32768 to 32767); missing or non-finite readings report `0`. The same conversion applies at startup, restoration, and on updates. Units are not inferred from the Loxone display format: convert sources in Pa, kPa, or bar to hPa in Loxone before mapping them.
 
-Shades are exposed as lift-only window coverings. Lift and global movement status follow the shade; tilt remains stopped during movement and state restoration. Slat-angle control is not exposed.
+Shades are exposed as lift-only window coverings. Lift and global movement status are derived from both Loxone direction flags: up only reports Opening, down only reports Closing, and both inactive or both active report Stopped. The same mapping applies during restoration and updates, independent of the order in which reversal events arrive. Tilt remains stopped during movement and state restoration. Slat-angle control is not exposed.
 
 AC setpoint, system-mode, and fan attribute subscriptions forward only changes originating from a Matter fabric. Loxone feedback and initial-state restoration update Matter attributes without sending commands back to Loxone. Outbound temperature setpoints still round to whole degrees; fan mapping is unchanged.
 
