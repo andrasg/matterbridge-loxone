@@ -57,10 +57,10 @@
     "node-persist-manager": "^2.0.2"
   },
   "devDependencies": {
-    "@types/node": "26.1.1",
-    "oxfmt": "0.60.0",
-    "oxlint": "1.75.0",
-    "oxlint-tsgolint": "7.0.2001",
+    "@types/node": "26.6.2",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "oxlint-tsgolint": "7.0.2002",
     "typescript": "7.0.2"
   },
   "engines": {

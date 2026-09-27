@@ -1,34 +1,13 @@
-# Matterbridge Workspace Instructions (v.1.0.2)
+# Matterbridge Workspace Instructions (v.1.0.3)
 
-## Style And Formatting
+Read and apply the [shared repository instructions](../AGENTS.md) to all work in this repository. They are the single source for style, scope, architecture, and validation rules. Edit AGENTS.md instead of duplicating those rules here.
 
-- Follow [STYLEGUIDE.md](../STYLEGUIDE.md) for code style, naming, JSDoc, validation, logging, and formatting expectations.
-- JSDoc requirements are enforced by the configured linter. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
-- Import and export ordering are enforced by the formatter. Preserve the existing grouped and sorted order unless a change requires updating it.
-- Formatting is enforced by oxfmt. Follow the existing formatting and do not fight the formatter.
+## Copilot Specifics
 
-## Scope And Safety
+- Task-specific guidance lives directly in [.github/instructions](instructions/). Read relevant instructions in full; `applyTo` patterns select them for matching files, and descriptions support on-demand discovery.
+- The [verify-agent-context skill](skills/verify-agent-context/SKILL.md) is available as `/verify-agent-context` to check that this guidance is discoverable and readable.
+- Keep this setup Copilot-focused. Do not introduce other agents' configuration or shared pointer directories just to mirror the example plugin.
 
-- Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
-- Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
-- Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
-- Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24, and 26.
+## Upstream Reference
 
-## Project Architecture
-
-- This repository uses TypeScript and ESM. Follow existing project patterns for imports, exports, build configuration, and test setup.
-
-## Testing And Validation
-
-- Prefer the existing npm scripts in [package.json](../package.json) and the VS Code tasks in [tasks.json](../.vscode/tasks.json) for building, linting, and testing.
-- Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
-- Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
-- For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
-
-## Documentation
-
-- When behavior changes, update the relevant tests and documentation.
-
-## Additional Agent Guidance
-
-- Use dedicated instruction files under [.github/instructions](instructions/) when a rule applies only to specific file types or workflows.
+Adapted from the [example plugin instructions](https://github.com/Luligu/matterbridge-example-dynamic-platform/tree/8bf59991628a71e37c441e86a7a91372fe3bc778) on 2026-09-27: agent guidance v.1.0.3, endpoint guide v.1.0.2, testing standards v.1.0.5, and context-check skill v.1.0.0. Keep local paths, supported Node.js versions, and available scripts authoritative when incorporating later upstream changes.
